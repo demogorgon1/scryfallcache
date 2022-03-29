@@ -99,17 +99,6 @@ endif()
 
 # --------------------------------------------------------------------
 
-set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
-set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
-
-
-
 add_subdirectory(sfc)
 add_subdirectory(test)
 add_subdirectory(include)
-
-#add_executable(sfc-test 
-#test/test.c
-#)
-#
-#target_link_libraries(sfc-test sfc CURL::libcurl)

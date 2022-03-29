@@ -10,6 +10,7 @@ include_directories(
 )
 
 add_library(sfc STATIC
+	sfc_app.c
 	sfc_buffer.c
 	sfc_buffer.h
 	sfc_cache.c

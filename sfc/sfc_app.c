@@ -13,7 +13,9 @@ static void*
 sfc_app_default_alloc(
 	void*		user_data,
 	void*		realloc_memory,
-	size_t		size)
+	size_t		size,
+	const char*	file,
+	int			line)
 {
 	return realloc(realloc_memory, size);
 }

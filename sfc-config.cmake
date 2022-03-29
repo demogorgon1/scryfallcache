@@ -1,7 +1,7 @@
 find_path(SFC_INCLUDE_DIR
     NAMES sfc.h)
 
-find_library(CPR_LIBRARY
+find_library(SFC_LIBRARY
 	NAMES sfc
     HINTS ${SFC_LIBRARY_ROOT})
 
