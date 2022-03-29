@@ -1,0 +1,84 @@
+#if defined(WIN32)
+	#include <windows.h> /* GetTickCount64() */
+#else
+	#include <time.h> /* clock_gettime() */
+#endif
+
+#include <malloc.h>
+
+#include <sfc/sfc_app.h>
+#include <sfc/sfc_curl.h>
+
+static void*
+sfc_app_default_alloc(
+	void*		user_data,
+	void*		realloc_memory,
+	size_t		size)
+{
+	return realloc(realloc_memory, size);
+}
+
+static void
+sfc_app_default_free(
+	void*		user_data,
+	void*		memory)
+{
+	free(memory);
+}
+
+static uint64_t
+sfc_app_default_get_timer(
+	void*		user_data)
+{
+	#if defined(WIN32)
+		
+		return (uint64_t)GetTickCount64();
+
+	#else 
+		
+		/* FIXME: probably shouldn't assume we have clock_gettime() just because it's not windows */
+		timespec ts;
+		int result = clock_gettime(CLOCK_MONOTONIC, &ts);
+		assert(result == 0);			
+		return (((uint64_t)ts.tv_sec) * 1000) + (uint64_t)(ts.tv_nsec / 1000000);
+	
+	#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+void	
+sfc_app_init_malloc(
+	sfc_app*	app)
+{
+	app->alloc = sfc_app_default_alloc;
+	app->free = sfc_app_default_free;
+}
+
+void	
+sfc_app_init_curl(
+	sfc_app*	app)
+{
+	app->http_get = sfc_curl;
+	app->http_create_context = sfc_curl_create;
+	app->http_destroy_context = sfc_curl_destroy;
+}
+
+void	
+sfc_app_init_timer(
+	sfc_app*	app)
+{
+	app->get_timer = sfc_app_default_get_timer;
+}
+
+void	
+sfc_app_init_defaults(
+	sfc_app*	app)
+{
+	memset(app, 0, sizeof(sfc_app));
+
+	sfc_app_init_malloc(app);
+	sfc_app_init_curl(app);
+	sfc_app_init_timer(app);
+}
+
