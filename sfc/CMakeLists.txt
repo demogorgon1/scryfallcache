@@ -4,10 +4,16 @@ add_compile_definitions(
 	_CRT_SECURE_NO_WARNINGS
 )
 
-include_directories(
-	include
-	${curl_SOURCE_DIR}
-)
+if(SFC_CURL)
+	include_directories(
+		include
+		${curl_SOURCE_DIR}
+	)
+else()
+	include_directories(
+		include
+	)
+endif()
 
 add_library(sfc STATIC
 	sfc_app.c
@@ -37,9 +43,11 @@ add_library(sfc STATIC
 
 add_library(sfc::sfc ALIAS sfc)
 
-target_link_libraries(sfc PUBLIC CURL::libcurl)
+if(SFC_CURL)
+	target_link_libraries(sfc PUBLIC CURL::libcurl)
+endif()
 
-if(SFC_FORCE_USE_SYSTEM_CURL)
+if(SFC_FORCE_USE_SYSTEM_CURL AND SFC_CURL)
     install(TARGETS sfc
 		EXPORT sfcTargets
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
