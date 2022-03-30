@@ -1,3 +1,5 @@
+#if defined(SFC_CURL)
+
 #include <assert.h>
 #include <string.h>
 
@@ -124,3 +126,5 @@ sfc_curl(
 
 	return result;
 }
+
+#endif /* SFC_CURL */
