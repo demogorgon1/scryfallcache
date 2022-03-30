@@ -23,6 +23,7 @@ sfc_option(SFC_CURL "Enable curl support. If not enabled the client will need to
 enable_testing()
 
 include(FetchContent)
+include(GNUInstallDirs)
 
 # ------------------------------- curl -------------------------------
 if(SFC_CURL)
