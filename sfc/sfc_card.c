@@ -694,7 +694,7 @@ sfc_card_debug_print(
 		}
 	}
 
-	printf("data.timestamp: %llu\n", card->data.timestamp);
+	printf("data.timestamp: %u\n", (uint32_t)card->data.timestamp);
 }
 
 const char* 

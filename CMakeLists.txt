@@ -2,13 +2,26 @@ cmake_minimum_required (VERSION 3.19)
 
 project(sfc)
 
-option(SFC_FORCE_OPENSSL_BACKEND "Use OpenSSL." OFF)
-option(SFC_FORCE_WINSSL_BACKEND "Use WinSSL (Windows only)." OFF)
-option(SFC_FORCE_DARWINSSL_BACKEND "Use DarwinSSL." OFF)
-option(SFC_FORCE_USE_SYSTEM_CURL "Use the curl library installed on the system." OFF)
-option(SFC_CURL, "Enable curl support. If not enabled the client will need to supply its own http client." ON)
+macro(sfc_option OPTION_NAME OPTION_TEXT OPTION_DEFAULT)
+    option(${OPTION_NAME} ${OPTION_TEXT} ${OPTION_DEFAULT})
+    if(DEFINED ENV{${OPTION_NAME}})
+        # Allow overriding the option through an environment variable
+        set(${OPTION_NAME} $ENV{${OPTION_NAME}})
+    endif()
+    if(${OPTION_NAME})
+        add_definitions(-D${OPTION_NAME})
+    endif()
+    message(STATUS "${OPTION_NAME}: ${${OPTION_NAME}}")
+endmacro()
+
+sfc_option(SFC_FORCE_OPENSSL_BACKEND "Use OpenSSL." OFF)
+sfc_option(SFC_FORCE_WINSSL_BACKEND "Use WinSSL (Windows only)." OFF)
+sfc_option(SFC_FORCE_DARWINSSL_BACKEND "Use DarwinSSL." OFF)
+sfc_option(SFC_FORCE_USE_SYSTEM_CURL "Use the curl library installed on the system." OFF)
+sfc_option(SFC_CURL "Enable curl support. If not enabled the client will need to supply its own http client." ON)
 
 enable_testing()
+
 include(FetchContent)
 
 # ------------------------------- curl -------------------------------

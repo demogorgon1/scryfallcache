@@ -1,12 +1,18 @@
 #ifndef __SCRYFALLCACHE_CARD_H__
 #define	__SCRYFALLCACHE_CARD_H__
 
+#include <time.h>
+
 #include <sfc/sfc_base.h>
 
 #ifdef  __cplusplus
 extern "C"
 {
 #endif
+
+struct _sfc_app;
+struct _sfc_deserializer;
+struct _sfc_serializer;
 
 #define SFC_CARD_COLOR_WHITE		0x01
 #define SFC_CARD_COLOR_BLACK		0x02

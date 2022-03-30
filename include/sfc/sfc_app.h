@@ -8,6 +8,8 @@ extern "C"
 {
 #endif
 
+struct _sfc_app;
+
 typedef void (*sfc_debug_print_callback)(
 	void*					user_data,
 	const char*				message);

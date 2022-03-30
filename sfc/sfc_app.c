@@ -4,7 +4,9 @@
 	#include <time.h> /* clock_gettime() */
 #endif
 
+#include <assert.h>
 #include <malloc.h>
+#include <string.h>
 
 #include <sfc/sfc_app.h>
 #include <sfc/sfc_curl.h>
@@ -39,7 +41,7 @@ sfc_app_default_get_timer(
 	#else 
 		
 		/* FIXME: probably shouldn't assume we have clock_gettime() just because it's not windows */
-		timespec ts;
+		struct timespec ts;
 		int result = clock_gettime(CLOCK_MONOTONIC, &ts);
 		assert(result == 0);			
 		return (((uint64_t)ts.tv_sec) * 1000) + (uint64_t)(ts.tv_nsec / 1000000);

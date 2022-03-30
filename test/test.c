@@ -123,10 +123,10 @@ void
 test_debug_print_allocations(
 	test_user_data*				user_data)
 {
-	printf("total allocations: %llu (%llu bytes)\n", user_data->total_alloc_count, user_data->total_alloc_size);
+	printf("total allocations: %u (%u bytes)\n", (uint32_t)user_data->total_alloc_count, (uint32_t)user_data->total_alloc_size);
 
 	for(test_memory_header* t = user_data->allocations.head; t != NULL; t = t->next)
-		printf("%s:%u: %p (%llu bytes)\n", t->file, t->line, t + 1, t->size);
+		printf("%s:%d: %p (%u bytes)\n", t->file, t->line, t + 1, (uint32_t)t->size);
 }
 
 void*
@@ -804,8 +804,8 @@ test_card_set()
 		TEST_ASSERT(cards[i] != NULL);
 
 		/* Make up some unique key */
-		snprintf(cards[i]->key.name, sizeof(cards[i]->key.name), "n%llu", i);
-		snprintf(cards[i]->key.set, sizeof(cards[i]->key.set), "s%llu", i);
+		snprintf(cards[i]->key.name, sizeof(cards[i]->key.name), "n%u", (uint32_t)i);
+		snprintf(cards[i]->key.set, sizeof(cards[i]->key.set), "s%u", (uint32_t)i);
 		cards[i]->key.version = (uint8_t)(i % 4);
 	}
 

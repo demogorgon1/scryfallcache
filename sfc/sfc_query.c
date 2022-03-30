@@ -21,27 +21,29 @@ sfc_query_update_init(
 	switch(query->type)
 	{
 	case SFC_QUERY_TYPE_CARDMARKET_ID:
-		sfc_card* card = sfc_card_map_uint32_get(query->cache->cardmarket_id_map, query->cardmarket_id);
-
-		if(card != NULL)
 		{
-			sfc_card_array_add(query->results, card);
+			sfc_card* card = sfc_card_map_uint32_get(query->cache->cardmarket_id_map, query->cardmarket_id);
 
-			query->result = SFC_RESULT_OK;
-			query->state = SFC_QUERY_STATE_COMPLETED;
-		}
-		else
-		{
-			int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/cardmarket/%u", query->cardmarket_id);
-			if(required > sizeof(query->http_get_url))
+			if(card != NULL)
 			{
-				query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+				sfc_card_array_add(query->results, card);
+	
+				query->result = SFC_RESULT_OK;
 				query->state = SFC_QUERY_STATE_COMPLETED;
 			}
 			else
 			{
-				query->state = SFC_QUERY_STATE_HTTP_GET;
-			}			
+				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/cardmarket/%u", query->cardmarket_id);
+				if(required > sizeof(query->http_get_url))
+				{
+					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+					query->state = SFC_QUERY_STATE_COMPLETED;
+				}
+				else
+				{
+					query->state = SFC_QUERY_STATE_HTTP_GET;
+				}			
+			}
 		}
 		break;
 
