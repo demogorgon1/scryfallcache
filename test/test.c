@@ -12,7 +12,8 @@
 #include "../sfc/sfc_leaky_bucket.h"
 #include "../sfc/sfc_serializer.h"
 
-#define TEST_CARD_COUNT 200
+#define TEST_CARD_COUNT			200
+#define TEST_QUERY_TIMEOUT		100 * 1000 /* Not actual time - timer is advanced automatically when queried */
 
 /* https://api.scryfall.com/cards/cardmarket/5013
    https://api.scryfall.com/cards/named?exact=Castle&set=2ed */
@@ -55,7 +56,7 @@ const char* g_test_json_cardmarket_id_5013 =
 	"\"https://www.cardhoarder.com/cards?affiliate_id=scryfall\\u0026data%5Bsearch%5D=Castle\\u0026ref=card-profile\\u0026utm_camp"
 	"aign=affiliate\\u0026utm_medium=card\\u0026utm_source=scryfall\"}}";
 
-#define TEST_ASSERT(_Expression) test_assert(_Expression, #_Expression, __FILE__, __LINE__)
+#define TEST_ASSERT(_expression) test_assert(_expression, #_expression, __FILE__, __LINE__)
 
 void
 test_assert(
@@ -204,10 +205,26 @@ test_get_timer(
 	return t->test_timer += 1000;
 }
 
+void
+test_sleep(
+	void*				user_data,
+	uint32_t			sleep_ms)
+{
+	/* Do nothing */
+}
+
 typedef struct _test_http_context
 {
 	sfc_app*			app;
+	size_t				request_count;
 } test_http_context;
+
+typedef struct _test_http_request
+{
+	test_http_context*	context;
+	char*				result;
+	size_t				size;
+} test_http_request;
 
 void* 
 test_http_context_create(
@@ -227,8 +244,18 @@ test_http_context_destroy(
 	void*				http_context)
 {
 	test_http_context* context = (test_http_context*)http_context;
+
+	/* Make sure there are no pending requests */
+	TEST_ASSERT(context->request_count == 0);
 	
 	context->app->free(context->app->user_data, http_context);
+}
+
+sfc_result
+test_http_context_update(
+	void*				http_context)
+{
+	return SFC_RESULT_OK;
 }
 
 char*
@@ -243,80 +270,108 @@ test_strdup_no_null_term(
 	return new_string;
 }
 
-sfc_result		
+void*		
 test_http_get(
 	void*				http_context,
-	const char*			url,
-	char**				out_data,
-	size_t*				out_data_size)
+	const char*			url)
 {
 	test_http_context* context = (test_http_context*)http_context;
+
+	test_http_request* req = (test_http_request*)SFC_ALLOC(context->app->alloc, context->app->user_data, NULL, sizeof(test_http_request));
+	assert(req != NULL);
+	memset(req, 0, sizeof(test_http_request));
+
+	req->context = context;
+
+	context->request_count++;
 	
 	if(strcmp(url, "https://api.scryfall.com/cards/cardmarket/5013") == 0 ||
 		strcmp(url, "https://api.scryfall.com/cards/named?exact=Castle&set=2ed") == 0)
 	{		
-		*out_data = test_strdup_no_null_term(context->app, g_test_json_cardmarket_id_5013, out_data_size);
+		req->result = test_strdup_no_null_term(context->app, g_test_json_cardmarket_id_5013, &req->size);
 	}
 	else if(strcmp(url, "https://api.scryfall.com/cards/test/1") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app, 
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"card\", \"name\":\"test1\", \"set\":\"test\", \"collector_number\":\"1\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/2") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"error\", \"code\":\"not_found\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/2a") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"card\", \"name\":\"test2a\", \"set\":\"test\", \"collector_number\":\"2a\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/2b") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"card\", \"name\":\"test2b\", \"set\":\"test\", \"collector_number\":\"2b\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/2c") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"card\", \"name\":\"test2c\", \"set\":\"test\", \"collector_number\":\"2c\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/2d") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"error\", \"code\":\"not_found\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/3") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"card\", \"name\":\"test3\", \"set\":\"test\", \"collector_number\":\"3\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/4") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"error\", \"code\":\"not_found\"}",
-			out_data_size);
+			&req->size);
 	}
 	else if (strcmp(url, "https://api.scryfall.com/cards/test/4a") == 0)
 	{
-		*out_data = test_strdup_no_null_term(context->app,
+		req->result = test_strdup_no_null_term(context->app,
 			"{\"object\":\"error\", \"code\":\"not_found\"}",
-			out_data_size);
+			&req->size);
 	}
 	else
 	{
 		TEST_ASSERT(0);
 	}
 
-	return SFC_RESULT_OK;
+	return req;
+}
+
+sfc_bool
+test_http_poll(
+	void*				http_request,
+	sfc_result*			out_result,
+	char**				out_data,
+	size_t*				out_data_size)
+{
+	test_http_request* req = (test_http_request*)http_request;
+	TEST_ASSERT(req->result != NULL);
+	TEST_ASSERT(req->context->request_count > 0);
+
+	*out_data = req->result;
+	*out_data_size = req->size;
+	*out_result = SFC_RESULT_OK;
+
+	req->context->request_count--;
+
+	req->context->app->free(req->context->app->user_data, req);
+
+	return SFC_TRUE;
 }
 
 void
@@ -357,9 +412,12 @@ test_init(
 	app->alloc = test_alloc;
 	app->free = test_free;
 	app->get_timer = test_get_timer;
+	app->sleep = test_sleep;
 	app->http_create_context = test_http_context_create;
 	app->http_destroy_context = test_http_context_destroy;
+	app->http_update_context = test_http_context_update;
 	app->http_get = test_http_get;
+	app->http_poll = test_http_poll;
 	app->user_data = test_data;
 }
 
@@ -415,13 +473,7 @@ test_cache()
 		/* Update query until completed */
 		{
 			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_INIT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_HTTP_GET);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_PARSE_RESULT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
 		}
 
 		/* Verify that we got the expected result */
@@ -448,9 +500,7 @@ test_cache()
 		/* Query should complete immediately */
 		{
 			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_INIT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
 		}
 
 		/* Result should still be the same */
@@ -499,9 +549,8 @@ test_cache()
 		/* Query should complete immediately */
 		{
 			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_INIT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+
 		}
 
 		/* Again, result should still be the same */
@@ -536,13 +585,8 @@ test_cache()
 		/* Update query until completed */
 		{
 			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_INIT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_HTTP_GET);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_PARSE_RESULT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+
 		}
 
 		/* Verify that we got the expected result */
@@ -577,19 +621,8 @@ test_cache()
 
 		/* Update queries until completed */
 		{
-			TEST_ASSERT(query1 != NULL);
-			TEST_ASSERT(query2 != NULL);
-			TEST_ASSERT(query1->state == SFC_QUERY_STATE_INIT);
-			TEST_ASSERT(query2->state == SFC_QUERY_STATE_INIT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query1->state == SFC_QUERY_STATE_HTTP_GET);
-			TEST_ASSERT(query2->state == SFC_QUERY_STATE_HTTP_GET);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query1->state == SFC_QUERY_STATE_PARSE_RESULT);
-			TEST_ASSERT(query2->state == SFC_QUERY_STATE_PARSE_RESULT);
-			sfc_cache_update(cache);
-			TEST_ASSERT(query1->state == SFC_QUERY_STATE_COMPLETED);
-			TEST_ASSERT(query2->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query1, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+			TEST_ASSERT(sfc_query_wait(query2, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
 		}
 
 		/* Verify that we got the expected results */
@@ -629,20 +662,7 @@ test_cache()
 		/* Update query until completed */
 		{
 			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_INIT);
-
-			for(int i = 0; i < 9; i++)
-			{
-				sfc_cache_update(cache);
-				TEST_ASSERT(query->state == SFC_QUERY_STATE_GET_NEXT_IN_SET);
-				sfc_cache_update(cache);
-				TEST_ASSERT(query->state == SFC_QUERY_STATE_HTTP_GET);
-				sfc_cache_update(cache);
-				TEST_ASSERT(query->state == SFC_QUERY_STATE_PARSE_RESULT);
-			}
-
-			sfc_cache_update(cache);
-			TEST_ASSERT(query->state == SFC_QUERY_STATE_COMPLETED);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
 		}
 
 		/* Verify that we got the expected result */
@@ -982,6 +1002,46 @@ test_serializer()
 	TEST_ASSERT(test_data.total_alloc_size == 0);
 }
 
+#if defined(SFC_CURL)
+
+	void test_curl()
+	{
+		test_user_data test_data;
+		sfc_app app;
+		test_init(&test_data, &app);
+		sfc_app_init_curl(&app);
+		sfc_app_init_timer(&app);
+		sfc_app_init_sleep(&app);
+		app.debug_print = sfc_debug_stdio;
+
+		/* Do an actual scryfall API requests using curl */
+		sfc_cache* cache = sfc_cache_create(&app, 9);
+		TEST_ASSERT(cache != NULL);
+
+		sfc_query* query1 = sfc_cache_query_cardmarket_id(cache, 999);
+		sfc_query* query2 = sfc_cache_query_cardmarket_id(cache, 1000);
+		TEST_ASSERT(query1 != NULL);
+		TEST_ASSERT(query2 != NULL);
+		TEST_ASSERT(sfc_query_wait(query1, 20 * 1000) == SFC_RESULT_OK);
+		TEST_ASSERT(sfc_query_wait(query2, 20 * 1000) == SFC_RESULT_OK);
+		TEST_ASSERT(query1->result == SFC_RESULT_OK);
+		TEST_ASSERT(query2->result == SFC_RESULT_OK);
+		TEST_ASSERT(query1->results->count == 1);
+		TEST_ASSERT(query2->results->count == 1);
+		sfc_card* card1 = query1->results->cards[0];
+		sfc_card* card2 = query2->results->cards[0];
+		TEST_ASSERT(strcmp(card1->key.name, "Daru Warchief") == 0);
+		TEST_ASSERT(strcmp(card2->key.name, "Dawn Elemental") == 0);
+
+		sfc_cache_destroy(cache);
+
+		/* Make sure we didn't leak memory */
+		TEST_ASSERT(test_data.total_alloc_count == 0);
+		TEST_ASSERT(test_data.total_alloc_size == 0);
+	}
+
+#endif
+
 int
 main(
 	int		argc,
@@ -994,6 +1054,10 @@ main(
 	test_card_set();
 	test_leaky_bucket();
 	test_serializer();
+
+	#if defined(SFC_CURL)
+		test_curl();
+	#endif
 
 	return 0;
 }

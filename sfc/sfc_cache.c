@@ -153,38 +153,50 @@ sfc_cache_query_set(
 	return query;
 }
 
-void			
+sfc_result			
 sfc_cache_update(
 	sfc_cache*					cache)
 {
-	sfc_query* query = cache->first_query;
-
-	while(query != NULL)
+	/* Update http context */
 	{
-		sfc_query_update(query);
-
-		sfc_query* next_query = query->next;
-
-		if(query->state == SFC_QUERY_STATE_DELETE)
-		{
-			sfc_card_array_destroy(query->results);
-
-			/* Remove from double linked list and delete */
-			if(query->prev != NULL)
-				query->prev->next = query->next;
-			else
-				cache->first_query = query->next;
-
-			if (query->next != NULL)
-				query->next->prev = query->prev;
-			else
-				cache->last_query = query->prev;			
-
-			cache->app->free(cache->app->user_data, query);
-		}
-
-		query = next_query;
+		sfc_result result = cache->app->http_update_context(cache->http_context);
+		if(result != SFC_RESULT_OK)
+			return result;
 	}
+
+	/* Update queries */
+	{
+		sfc_query* query = cache->first_query;
+
+		while (query != NULL)
+		{
+			sfc_query_update(query);
+
+			sfc_query* next_query = query->next;
+
+			if (query->state == SFC_QUERY_STATE_DELETE)
+			{
+				sfc_card_array_destroy(query->results);
+
+				/* Remove from double linked list and delete */
+				if (query->prev != NULL)
+					query->prev->next = query->next;
+				else
+					cache->first_query = query->next;
+
+				if (query->next != NULL)
+					query->next->prev = query->prev;
+				else
+					cache->last_query = query->prev;
+
+				cache->app->free(cache->app->user_data, query);
+			}
+
+			query = next_query;
+		}
+	}
+
+	return SFC_RESULT_OK;
 }
 
 sfc_result

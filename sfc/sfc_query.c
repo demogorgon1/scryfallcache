@@ -197,8 +197,13 @@ sfc_query_update_http_get(
 
 	assert(query->http_get_result == NULL);
 	assert(query->http_get_result_size == 0);
+	assert(query->http_request == NULL);
 
-	sfc_result result = query->cache->app->http_get(
+	query->http_request = query->cache->app->http_get(query->cache->http_context, query->http_get_url);
+
+	query->state = SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION;
+
+	/*sfc_result result = query->cache->app->http_get(
 		query->cache->http_context,
 		query->http_get_url,
 		&query->http_get_result,
@@ -212,6 +217,19 @@ sfc_query_update_http_get(
 	{		
 		query->result = result;
 		query->state = SFC_QUERY_STATE_COMPLETED;
+	}*/
+}
+
+/* Update state: SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION */
+static void
+sfc_query_update_waiting_for_http_completion(
+	sfc_query*			query)
+{
+	if(query->cache->app->http_poll(query->http_request, &query->result, &query->http_get_result, &query->http_get_result_size))
+	{
+		query->http_request = NULL;
+
+		query->state = SFC_QUERY_STATE_PARSE_RESULT;
 	}
 }
 
@@ -403,18 +421,19 @@ sfc_query_update(
 {
 	switch(query->state)
 	{
-	case SFC_QUERY_STATE_INIT:					sfc_query_update_init(query); break;
-	case SFC_QUERY_STATE_GET_NEXT_IN_SET:		sfc_query_update_get_next_in_set(query); break;
-	case SFC_QUERY_STATE_HTTP_GET:				sfc_query_update_http_get(query); break;
-	case SFC_QUERY_STATE_PARSE_RESULT:			sfc_query_update_parse_result(query); break;
+	case SFC_QUERY_STATE_INIT:							sfc_query_update_init(query); break;
+	case SFC_QUERY_STATE_GET_NEXT_IN_SET:				sfc_query_update_get_next_in_set(query); break;
+	case SFC_QUERY_STATE_HTTP_GET:						sfc_query_update_http_get(query); break;
+	case SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION:	sfc_query_update_waiting_for_http_completion(query); break;
+	case SFC_QUERY_STATE_PARSE_RESULT:					sfc_query_update_parse_result(query); break;
 
 	default:
 		break;
 	}
 }
 
-int		
-sfc_query_is_completed(
+sfc_bool
+sfc_query_poll(
 	sfc_query*			query)
 {
 	return query->state == SFC_QUERY_STATE_COMPLETED;
@@ -429,4 +448,30 @@ sfc_query_delete(
 	query->state = SFC_QUERY_STATE_DELETE;
 }
 
+sfc_result	
+sfc_query_wait(
+	sfc_query*			query,
+	uint32_t			timeout_ms)
+{
+	uint64_t start_time = query->cache->app->get_timer(query->cache->app->user_data);
 
+	while(!sfc_query_poll(query))
+	{
+		if(timeout_ms != UINT32_MAX)
+		{
+			uint64_t current_time = query->cache->app->get_timer(query->cache->app->user_data);
+			uint64_t elapsed_time = current_time > start_time ? current_time - start_time : 0;
+
+			if (elapsed_time > (uint64_t)timeout_ms)
+				return SFC_RESULT_TIMED_OUT;
+		}
+
+		query->cache->app->sleep(query->cache->app->user_data, 100);
+
+		sfc_result update_result = sfc_cache_update(query->cache);
+		if(update_result != SFC_RESULT_OK)
+			return update_result;
+	}
+
+	return SFC_RESULT_OK;
+}

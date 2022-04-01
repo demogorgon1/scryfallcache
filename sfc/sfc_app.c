@@ -49,6 +49,22 @@ sfc_app_default_get_timer(
 	#endif
 }
 
+static void
+sfc_app_default_sleep(
+	void*		user_data,
+	uint32_t	sleep_ms)
+{
+	#if defined(WIN32)
+
+		Sleep((DWORD)sleep_ms);
+
+	#else
+	
+		usleep(sleep_ms * 1000);
+
+	#endif
+}
+
 /*---------------------------------------------------------------------------*/
 
 void	
@@ -63,9 +79,11 @@ void
 sfc_app_init_curl(
 	sfc_app*	app)
 {
-	app->http_get = sfc_curl;
+	app->http_get = sfc_curl_get;
 	app->http_create_context = sfc_curl_create;
 	app->http_destroy_context = sfc_curl_destroy;
+	app->http_update_context = sfc_curl_update;
+	app->http_poll = sfc_curl_poll;
 }
 
 void	
@@ -73,6 +91,13 @@ sfc_app_init_timer(
 	sfc_app*	app)
 {
 	app->get_timer = sfc_app_default_get_timer;
+}
+
+void
+sfc_app_init_sleep(
+	sfc_app*	app)
+{
+	app->sleep = sfc_app_default_sleep;
 }
 
 void	
@@ -84,5 +109,6 @@ sfc_app_init_defaults(
 	sfc_app_init_malloc(app);
 	sfc_app_init_curl(app);
 	sfc_app_init_timer(app);
+	sfc_app_init_sleep(app);
 }
 

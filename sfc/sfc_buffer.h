@@ -22,15 +22,23 @@ typedef struct _sfc_buffer
 void	sfc_buffer_init(
 			sfc_buffer*			buffer,
 			struct _sfc_app*	app);
+
 void	sfc_buffer_uninit(
 			sfc_buffer*			buffer);
+
 void	sfc_buffer_set_size(
 			sfc_buffer*			buffer,
 			size_t				size);
+
 void*	sfc_buffer_append(
 			sfc_buffer*			buffer,
 			const void*			data,
 			size_t				data_size);
+
+void	sfc_buffer_detach(
+			sfc_buffer*			buffer,
+			void**				out_data,
+			size_t*				out_size);
 
 #ifdef  __cplusplus
 }

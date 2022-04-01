@@ -43,6 +43,7 @@ extern "C"
 #define SFC_RESULT_FILE_RENAME_ERROR				-31
 #define SFC_RESULT_FILE_OPEN_ERROR					-32
 #define SFC_RESULT_OUT_OF_BOUNDS					-33
+#define SFC_RESULT_TIMED_OUT						-34
 
 typedef int sfc_result;
 

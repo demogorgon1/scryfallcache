@@ -56,7 +56,7 @@ struct _sfc_query*		sfc_cache_query_set(
 							sfc_cache*					cache,
 							const char*					set);
 
-void					sfc_cache_update(
+sfc_result				sfc_cache_update(
 							sfc_cache*					cache);
 
 sfc_result				sfc_cache_add_card(

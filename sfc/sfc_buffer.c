@@ -79,3 +79,29 @@ sfc_buffer_append(
 
 	return buffer->p + write_offset;
 }
+
+void	
+sfc_buffer_detach(
+	sfc_buffer*			buffer,
+	void**				out_data,
+	size_t*				out_size)
+{
+	if(buffer->p != buffer->static_buffer)
+	{
+		/* Just detach the pointer */
+		*out_data = buffer->p;
+		buffer->p = buffer->static_buffer;
+		buffer->allocated = sizeof(buffer->static_buffer);
+	}
+	else
+	{
+		/* No allocated memory, need to allocate and copy the static part */
+		*out_data = SFC_ALLOC(buffer->app->alloc, buffer->app->user_data, NULL, buffer->size);
+		assert(*out_data != NULL);
+		memcpy(*out_data, buffer->static_buffer, buffer->size);
+	}
+
+	*out_size = buffer->size;
+
+	buffer->size = 0;
+}
