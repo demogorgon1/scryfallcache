@@ -80,7 +80,7 @@ sfc_bool	sfc_query_poll(
 void		sfc_query_delete(
 				sfc_query*			query);
 
-sfc_bool	sfc_query_wait(
+sfc_result	sfc_query_wait(
 				sfc_query*			query,
 				uint32_t			timeout_ms);
 
