@@ -2,6 +2,7 @@
 	#include <windows.h> /* GetTickCount64() */
 #else
 	#include <time.h> /* clock_gettime() */
+	#include <unistd.h> /* usleep() */
 #endif
 
 #include <assert.h>
