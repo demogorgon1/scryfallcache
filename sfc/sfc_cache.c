@@ -25,6 +25,10 @@ sfc_cache_create(
 	assert(app->alloc != NULL);
 	assert(app->free != NULL);
 	assert(app->http_get != NULL); 
+	assert(app->http_create_context != NULL);
+	assert(app->http_destroy_context != NULL);
+	assert(app->http_update_context != NULL);
+	assert(app->http_poll != NULL);
 	assert(app->get_timer != NULL);
 
 	sfc_cache* cache = (sfc_cache*)SFC_ALLOC(app->alloc,app->user_data, NULL, sizeof(sfc_cache));
