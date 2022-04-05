@@ -107,8 +107,11 @@ sfc_app_init_defaults(
 	memset(app, 0, sizeof(sfc_app));
 
 	sfc_app_init_malloc(app);
-	sfc_app_init_curl(app);
 	sfc_app_init_timer(app);
 	sfc_app_init_sleep(app);
+
+	#if defined(SFC_CURL)
+		sfc_app_init_curl(app);
+	#endif
 }
 
