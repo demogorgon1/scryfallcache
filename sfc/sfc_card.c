@@ -52,74 +52,74 @@ typedef struct _sfc_card_string_entry
 static sfc_card_string_entry g_sfc_card_string_entries[] = 
 {
 	/* Root values */
-	NULL,			"released_at",						SFC_CARD_STRING_RELEASED_AT,
-	NULL,			"rarity",							SFC_CARD_STRING_RARITY,
-	NULL,			"lang",								SFC_CARD_STRING_LANGUAGE,
-	NULL,			"scryfall_id",						SFC_CARD_STRING_SCRYFALL_ID,
-	NULL,			"layout",							SFC_CARD_STRING_LAYOUT,
-	NULL,			"mana_cost",						SFC_CARD_STRING_MANA_COST,
-	NULL,			"cmc",								SFC_CARD_STRING_CMC,
-	NULL,			"type_line",						SFC_CARD_STRING_TYPE_LINE,
-	NULL,			"oracle_text",						SFC_CARD_STRING_ORACLE_TEXT,
-	NULL,			"reserved",							SFC_CARD_STRING_RESERVED,
-	NULL,			"foil",								SFC_CARD_STRING_FOIL,
-	NULL,			"nonfoil",							SFC_CARD_STRING_NONFOIL,
-	NULL,			"oversized",						SFC_CARD_STRING_OVERSIZED,
-	NULL,			"promo",							SFC_CARD_STRING_PROMO,
-	NULL,			"reprint",							SFC_CARD_STRING_REPRINT,
-	NULL,			"variation",						SFC_CARD_STRING_VARIATION,
-	NULL,			"set_name",							SFC_CARD_STRING_SET_NAME,
-	NULL,			"set_type",							SFC_CARD_STRING_SET_TYPE,
-	NULL,			"digital",							SFC_CARD_STRING_DIGITAL,
-	NULL,			"flavor_text",						SFC_CARD_STRING_FLAVOR_TEXT,
-	NULL,			"artist",							SFC_CARD_STRING_ARTIST,
-	NULL,			"back_id",							SFC_CARD_STRING_BACK_ID,
-	NULL,			"illustration_id",					SFC_CARD_STRING_ILLUSTRATION_ID,
-	NULL,			"border_color",						SFC_CARD_STRING_BORDER_COLOR,
-	NULL,			"frame",							SFC_CARD_STRING_FRAME,
-	NULL,			"full_art",							SFC_CARD_STRING_FULL_ART,
-	NULL,			"textless",							SFC_CARD_STRING_TEXTLESS,
-	NULL,			"booster",							SFC_CARD_STRING_BOOSTER,
-	NULL,			"power",							SFC_CARD_STRING_POWER,
-	NULL,			"toughness",						SFC_CARD_STRING_TOUGHNESS,
+	{ NULL,			"released_at",						SFC_CARD_STRING_RELEASED_AT					},
+	{ NULL,			"rarity",							SFC_CARD_STRING_RARITY						},
+	{ NULL,			"lang",								SFC_CARD_STRING_LANGUAGE					},
+	{ NULL,			"scryfall_id",						SFC_CARD_STRING_SCRYFALL_ID					},
+	{ NULL,			"layout",							SFC_CARD_STRING_LAYOUT						},
+	{ NULL,			"mana_cost",						SFC_CARD_STRING_MANA_COST					},
+	{ NULL,			"cmc",								SFC_CARD_STRING_CMC							},
+	{ NULL,			"type_line",						SFC_CARD_STRING_TYPE_LINE					},
+	{ NULL,			"oracle_text",						SFC_CARD_STRING_ORACLE_TEXT					},
+	{ NULL,			"reserved",							SFC_CARD_STRING_RESERVED					},
+	{ NULL,			"foil",								SFC_CARD_STRING_FOIL						},
+	{ NULL,			"nonfoil",							SFC_CARD_STRING_NONFOIL						},
+	{ NULL,			"oversized",						SFC_CARD_STRING_OVERSIZED					},
+	{ NULL,			"promo",							SFC_CARD_STRING_PROMO						},
+	{ NULL,			"reprint",							SFC_CARD_STRING_REPRINT						},
+	{ NULL,			"variation",						SFC_CARD_STRING_VARIATION					},
+	{ NULL,			"set_name",							SFC_CARD_STRING_SET_NAME					},
+	{ NULL,			"set_type",							SFC_CARD_STRING_SET_TYPE					},
+	{ NULL,			"digital",							SFC_CARD_STRING_DIGITAL						},
+	{ NULL,			"flavor_text",						SFC_CARD_STRING_FLAVOR_TEXT					},
+	{ NULL,			"artist",							SFC_CARD_STRING_ARTIST						},
+	{ NULL,			"back_id",							SFC_CARD_STRING_BACK_ID						},
+	{ NULL,			"illustration_id",					SFC_CARD_STRING_ILLUSTRATION_ID				},
+	{ NULL,			"border_color",						SFC_CARD_STRING_BORDER_COLOR				},
+	{ NULL,			"frame",							SFC_CARD_STRING_FRAME						},
+	{ NULL,			"full_art",							SFC_CARD_STRING_FULL_ART					},
+	{ NULL,			"textless",							SFC_CARD_STRING_TEXTLESS					},
+	{ NULL,			"booster",							SFC_CARD_STRING_BOOSTER						},
+	{ NULL,			"power",							SFC_CARD_STRING_POWER						},
+	{ NULL,			"toughness",						SFC_CARD_STRING_TOUGHNESS					},
 
 	/* Image URIs */
-	"image_uris",	"small",							SFC_CARD_STRING_IMAGE_URI_SMALL,
-	"image_uris",	"normal",							SFC_CARD_STRING_IMAGE_URI_NORMAL,
-	"image_uris",	"large",							SFC_CARD_STRING_IMAGE_URI_LARGE,
-	"image_uris",	"png",								SFC_CARD_STRING_IMAGE_URI_PNG,
-	"image_uris",	"art_crop",							SFC_CARD_STRING_IMAGE_URI_ART_CROP,
-	"image_uris",	"border_crop",						SFC_CARD_STRING_IMAGE_URI_BORDER_CROP,
+	{ "image_uris",	"small",							SFC_CARD_STRING_IMAGE_URI_SMALL				},
+	{ "image_uris",	"normal",							SFC_CARD_STRING_IMAGE_URI_NORMAL			},
+	{ "image_uris",	"large",							SFC_CARD_STRING_IMAGE_URI_LARGE				},
+	{ "image_uris",	"png",								SFC_CARD_STRING_IMAGE_URI_PNG				},
+	{ "image_uris",	"art_crop",							SFC_CARD_STRING_IMAGE_URI_ART_CROP			},
+	{ "image_uris",	"border_crop",						SFC_CARD_STRING_IMAGE_URI_BORDER_CROP		},
 
 	/* Prices */
-	"prices",		"usd",								SFC_CARD_STRING_PRICE_USD,
-	"prices",		"usd_foil",							SFC_CARD_STRING_PRICE_USD_FOIL,
-	"prices",		"usd_etched",						SFC_CARD_STRING_PRICE_USD_ETCHED,
-	"prices",		"eur",								SFC_CARD_STRING_PRICE_EUR,
-	"prices",		"eur_foil",							SFC_CARD_STRING_PRICE_EUR_FOIL,
-	"prices",		"tix",								SFC_CARD_STRING_PRICE_TIX,
+	{ "prices",		"usd",								SFC_CARD_STRING_PRICE_USD					},
+	{ "prices",		"usd_foil",							SFC_CARD_STRING_PRICE_USD_FOIL				},
+	{ "prices",		"usd_etched",						SFC_CARD_STRING_PRICE_USD_ETCHED			},
+	{ "prices",		"eur",								SFC_CARD_STRING_PRICE_EUR					},
+	{ "prices",		"eur_foil",							SFC_CARD_STRING_PRICE_EUR_FOIL				},
+	{ "prices",		"tix",								SFC_CARD_STRING_PRICE_TIX					},
 
 	/* Legalities */
-	"legalities",	"standard",							SFC_CARD_STRING_LEGALITY_STANDARD,
-	"legalities",	"future",							SFC_CARD_STRING_LEGALITY_FUTURE,
-	"legalities",	"historic",							SFC_CARD_STRING_LEGALITY_HISTORIC,
-	"legalities",	"gladiator",						SFC_CARD_STRING_LEGALITY_GLADIATOR,
-	"legalities",	"pioneer",							SFC_CARD_STRING_LEGALITY_PIONEER,
-	"legalities",	"modern",							SFC_CARD_STRING_LEGALITY_MODERN,
-	"legalities",	"legacy",							SFC_CARD_STRING_LEGALITY_LEGACY,
-	"legalities",	"pauper",							SFC_CARD_STRING_LEGALITY_PAUPER,
-	"legalities",	"vintage",							SFC_CARD_STRING_LEGALITY_VINTAGE,
-	"legalities",	"penny",							SFC_CARD_STRING_LEGALITY_PENNY,
-	"legalities",	"commander",						SFC_CARD_STRING_LEGALITY_COMMANDER,
-	"legalities",	"brawl",							SFC_CARD_STRING_LEGALITY_BRAWL,
-	"legalities",	"historicbrawl",					SFC_CARD_STRING_LEGALITY_HISTORICBRAWL,
-	"legalities",	"alchemy",							SFC_CARD_STRING_LEGALITY_ALCHEMY,
-	"legalities",	"paupercommander",					SFC_CARD_STRING_LEGALITY_PAUPERCOMMANDER,
-	"legalities",	"duel",								SFC_CARD_STRING_LEGALITY_DUEL,
-	"legalities",	"oldschool",						SFC_CARD_STRING_LEGALITY_OLDSCHOOL,
-	"legalities",	"premodern",						SFC_CARD_STRING_LEGALITY_PREMODERN,
+	{ "legalities",	"standard",							SFC_CARD_STRING_LEGALITY_STANDARD			},
+	{ "legalities",	"future",							SFC_CARD_STRING_LEGALITY_FUTURE				},
+	{ "legalities",	"historic",							SFC_CARD_STRING_LEGALITY_HISTORIC			},
+	{ "legalities",	"gladiator",						SFC_CARD_STRING_LEGALITY_GLADIATOR			},
+	{ "legalities",	"pioneer",							SFC_CARD_STRING_LEGALITY_PIONEER			},
+	{ "legalities",	"modern",							SFC_CARD_STRING_LEGALITY_MODERN				},
+	{ "legalities",	"legacy",							SFC_CARD_STRING_LEGALITY_LEGACY				},
+	{ "legalities",	"pauper",							SFC_CARD_STRING_LEGALITY_PAUPER				},
+	{ "legalities",	"vintage",							SFC_CARD_STRING_LEGALITY_VINTAGE			},
+	{ "legalities",	"penny",							SFC_CARD_STRING_LEGALITY_PENNY				},
+	{ "legalities",	"commander",						SFC_CARD_STRING_LEGALITY_COMMANDER			},
+	{ "legalities",	"brawl",							SFC_CARD_STRING_LEGALITY_BRAWL				},
+	{ "legalities",	"historicbrawl",					SFC_CARD_STRING_LEGALITY_HISTORICBRAWL		},
+	{ "legalities",	"alchemy",							SFC_CARD_STRING_LEGALITY_ALCHEMY			},
+	{ "legalities",	"paupercommander",					SFC_CARD_STRING_LEGALITY_PAUPERCOMMANDER	},
+	{ "legalities",	"duel",								SFC_CARD_STRING_LEGALITY_DUEL				},
+	{ "legalities",	"oldschool",						SFC_CARD_STRING_LEGALITY_OLDSCHOOL			},
+	{ "legalities",	"premodern",						SFC_CARD_STRING_LEGALITY_PREMODERN			},
 
-	NULL,			NULL
+	{ NULL,			NULL,								0											}
 };
 
 static const sfc_card_string_entry*
@@ -336,12 +336,8 @@ sfc_card_parse_json(
 	token++;
 	token_count--;
 
-	const char* object;
-
 	for (int i = 0; i < root_size; i++)
 	{
-		object = NULL;
-
 		const char* key;
 		JSON_GET_STRING(key);
 
