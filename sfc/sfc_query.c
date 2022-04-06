@@ -34,7 +34,7 @@ sfc_query_update_init(
 			else
 			{
 				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/cardmarket/%u", query->u.cardmarket_id);
-				if(required > sizeof(query->http_get_url))
+				if(required > (int)sizeof(query->http_get_url))
 				{
 					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
 					query->state = SFC_QUERY_STATE_COMPLETED;
@@ -97,7 +97,7 @@ sfc_query_update_init(
 				temp[offset] = '\0';
 
 				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/named?exact=%s&set=%s", temp, query->u.card_key.set);
-				if(required > sizeof(query->http_get_url))
+				if(required > (int)sizeof(query->http_get_url))
 				{
 					query->state = SFC_QUERY_STATE_COMPLETED;
 					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
@@ -175,7 +175,7 @@ sfc_query_update_get_next_in_set(
 			query->next_collector_number,
 			query->next_collector_number_version > 0 ? 'a' + query->next_collector_number_version - 1 : '\0');
 
-		if (required > sizeof(query->http_get_url))
+		if (required > (int)sizeof(query->http_get_url))
 		{
 			query->result = SFC_RESULT_BUFFER_TOO_SMALL;
 			query->state = SFC_QUERY_STATE_COMPLETED;
@@ -202,22 +202,6 @@ sfc_query_update_http_get(
 	query->http_request = query->cache->app->http_get(query->cache->http_context, query->http_get_url);
 
 	query->state = SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION;
-
-	/*sfc_result result = query->cache->app->http_get(
-		query->cache->http_context,
-		query->http_get_url,
-		&query->http_get_result,
-		&query->http_get_result_size);
-
-	if (result == SFC_RESULT_OK)
-	{
-		query->state = SFC_QUERY_STATE_PARSE_RESULT;
-	}
-	else
-	{		
-		query->result = result;
-		query->state = SFC_QUERY_STATE_COMPLETED;
-	}*/
 }
 
 /* Update state: SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION */
