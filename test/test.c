@@ -211,6 +211,8 @@ test_sleep(
 	uint32_t			sleep_ms)
 {
 	/* Do nothing */
+	SFC_UNUSED(user_data);
+	SFC_UNUSED(sleep_ms);
 }
 
 typedef struct _test_http_context
@@ -255,6 +257,8 @@ sfc_result
 test_http_context_update(
 	void*				http_context)
 {
+	SFC_UNUSED(http_context);
+
 	return SFC_RESULT_OK;
 }
 
@@ -989,9 +993,9 @@ test_serializer()
 		}
 
 		{
-			char buffer[100];
-			TEST_ASSERT(sfc_deserializer_read_string(&deseralizer, buffer, sizeof(buffer)) == SFC_RESULT_OK);
-			TEST_ASSERT(strcmp(buffer, "hello") == 0);
+			char buffer2[100];
+			TEST_ASSERT(sfc_deserializer_read_string(&deseralizer, buffer2, sizeof(buffer2)) == SFC_RESULT_OK);
+			TEST_ASSERT(strcmp(buffer2, "hello") == 0);
 		}		
 	}
 
@@ -1040,13 +1044,16 @@ test_serializer()
 		TEST_ASSERT(test_data.total_alloc_size == 0);
 	}
 
-#endif
+#endif /* SFC_CURL */
 
 int
 main(
 	int		argc,
 	char**	argv)
 {
+	SFC_UNUSED(argc);
+	SFC_UNUSED(argv);
+
 	test_buffer();
 	test_cache();
 	test_card_array();

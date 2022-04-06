@@ -171,9 +171,9 @@ sfc_card_map_uint32_grow(
 		{
 			int success = 1;
 
-			for (uint32_t i = 0; i < old_size; i++)
+			for (uint32_t j = 0; j < old_size; j++)
 			{
-				sfc_card_map_uint32_item* old = &old_map[i];
+				sfc_card_map_uint32_item* old = &old_map[j];
 				
 				if(old->card != NULL)
 				{

@@ -37,7 +37,7 @@ typedef struct _sfc_query
 		uint32_t			cardmarket_id;
 		sfc_card_key		card_key;
 		char				set[SFC_MAX_SET];
-	};
+	} u;
 
 	struct _sfc_cache*		cache;
 	struct _sfc_card_array*	results;

@@ -52,6 +52,8 @@ typedef int sfc_result;
 
 typedef int sfc_bool;
 
+#define SFC_UNUSED(_x)								_x
+
 #ifdef  __cplusplus
 }
 #endif

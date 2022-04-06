@@ -169,12 +169,14 @@ sfc_curl_update(
 			}
 		}
 
-		CURLMsg* msg = NULL;
-		int msgs_left = 0;
-
 		/* Poll for curl request updates */
-		while ((msg = curl_multi_info_read(curl_multi, &msgs_left)))
+		for(;;)
 		{
+			int msgs_left = 0;
+			CURLMsg* msg = curl_multi_info_read(curl_multi, &msgs_left);
+			if(msg == NULL)
+				break;
+
 			sfc_curl_request* req = sfc_curl_find_request_by_curl_handle(&context->requests, msg->easy_handle);
 			assert(req != NULL);
 			assert(!req->completed);

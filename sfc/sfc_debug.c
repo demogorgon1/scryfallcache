@@ -37,6 +37,8 @@ sfc_debug_stdio(
 	void*					user_data,
 	const char*				message)
 {
+	SFC_UNUSED(user_data);
+	
 	printf("%s\n", message);
 }
 

@@ -22,7 +22,7 @@ sfc_query_update_init(
 	{
 	case SFC_QUERY_TYPE_CARDMARKET_ID:
 		{
-			sfc_card* card = sfc_card_map_uint32_get(query->cache->cardmarket_id_map, query->cardmarket_id);
+			sfc_card* card = sfc_card_map_uint32_get(query->cache->cardmarket_id_map, query->u.cardmarket_id);
 
 			if(card != NULL)
 			{
@@ -33,7 +33,7 @@ sfc_query_update_init(
 			}
 			else
 			{
-				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/cardmarket/%u", query->cardmarket_id);
+				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/cardmarket/%u", query->u.cardmarket_id);
 				if(required > sizeof(query->http_get_url))
 				{
 					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
@@ -49,7 +49,7 @@ sfc_query_update_init(
 
 	case SFC_QUERY_TYPE_CARD_KEY:
 		{
-			sfc_card* card = sfc_card_set_get(query->cache->card_set, &query->card_key);
+			sfc_card* card = sfc_card_set_get(query->cache->card_set, &query->u.card_key);
 			if(card != NULL)
 			{
 				sfc_card_array_add(query->results, card);
@@ -62,7 +62,7 @@ sfc_query_update_init(
 				char temp[1024];
 				size_t offset = 0;
 
-				for (const char* p = query->card_key.name; *p != '\0'; p++)
+				for (const char* p = query->u.card_key.name; *p != '\0'; p++)
 				{
 					size_t remaining = sizeof(temp) - 1 - offset;
 					char c = *p;
@@ -96,7 +96,7 @@ sfc_query_update_init(
 
 				temp[offset] = '\0';
 
-				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/named?exact=%s&set=%s", temp, query->card_key.set);
+				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/named?exact=%s&set=%s", temp, query->u.card_key.set);
 				if(required > sizeof(query->http_get_url))
 				{
 					query->state = SFC_QUERY_STATE_COMPLETED;
@@ -111,11 +111,11 @@ sfc_query_update_init(
 		break;
 
 	case SFC_QUERY_TYPE_SET:
-		if(sfc_cache_has_full_set(query->cache, query->set))
+		if(sfc_cache_has_full_set(query->cache, query->u.set))
 		{
 			for (sfc_card* card = query->cache->first_card; card != NULL; card = card->next)
 			{
-				if (strcmp(card->key.set, query->set) == 0)
+				if (strcmp(card->key.set, query->u.set) == 0)
 					sfc_card_array_add(query->results, card);						
 			}
 
@@ -148,7 +148,7 @@ sfc_query_update_get_next_in_set(
 
 	for (sfc_card* card = query->cache->first_card; card != NULL; card = card->next)
 	{
-		if (strcmp(card->key.set, query->set) == 0 &&
+		if (strcmp(card->key.set, query->u.set) == 0 &&
 			card->key.version == query->next_collector_number_version &&
 			card->data.flags & SFC_CARD_COLLECTOR_NUMBER &&
 			card->data.collector_number == query->next_collector_number)
@@ -171,7 +171,7 @@ sfc_query_update_get_next_in_set(
 			query->http_get_url,
 			sizeof(query->http_get_url),
 			"https://api.scryfall.com/cards/%s/%u%c",
-			query->set,
+			query->u.set,
 			query->next_collector_number,
 			query->next_collector_number_version > 0 ? 'a' + query->next_collector_number_version - 1 : '\0');
 
@@ -290,7 +290,7 @@ sfc_query_update_parse_result(
 					query->state = SFC_QUERY_STATE_COMPLETED;
 
 					/* We're now sure to have the full set, mark it as fully cached */
-					sfc_string_set_add(query->cache->full_sets, query->set);
+					sfc_string_set_add(query->cache->full_sets, query->u.set);
 				}
 				else
 				{
@@ -329,12 +329,12 @@ sfc_query_update_parse_result(
 				sfc_card_array_add(query->results, card);
 			}
 
-			if (query->type == SFC_QUERY_TYPE_CARD_KEY && query->card_key.version != card->key.version)
+			if (query->type == SFC_QUERY_TYPE_CARD_KEY && query->u.card_key.version != card->key.version)
 			{
 				/* Oh no, we requested another version than we got. Since the scryfall API doesn't allow specifying what version you want
 					directly in the name search, we need to now get it with another request based on the collector's number. */
 
-				if (query->card_key.version == 0)
+				if (query->u.card_key.version == 0)
 				{
 					query->result = SFC_RESULT_REQUEST_NEEDS_VERSION;
 					query->state = SFC_QUERY_STATE_COMPLETED;
@@ -352,9 +352,9 @@ sfc_query_update_parse_result(
 							query->http_get_url,
 							sizeof(query->http_get_url) - 1,
 							"https://api.scryfall.com/cards/%s/%u%c",
-							query->card_key.set,
+							query->u.card_key.set,
 							card->data.collector_number,
-							'a' + query->card_key.version - 1);
+							'a' + query->u.card_key.version - 1);
 
 						query->state = SFC_QUERY_STATE_HTTP_GET;
 					}
@@ -386,7 +386,7 @@ sfc_query_init_cardmarket_id(
 	query->state = SFC_QUERY_STATE_INIT;
 	query->cache = cache;
 
-	query->cardmarket_id = cardmarket_id;
+	query->u.cardmarket_id = cardmarket_id;
 }
 
 void	
@@ -399,7 +399,7 @@ sfc_query_init_card_key(
 	query->state = SFC_QUERY_STATE_INIT;
 	query->cache = cache;
 
-	memcpy(&query->card_key, card_key, sizeof(sfc_card_key));
+	memcpy(&query->u.card_key, card_key, sizeof(sfc_card_key));
 }
 
 void	
@@ -412,7 +412,7 @@ sfc_query_init_set(
 	query->state = SFC_QUERY_STATE_INIT;
 	query->cache = cache;
 
-	strncpy(query->set, set, SFC_MAX_SET - 1);
+	strncpy(query->u.set, set, SFC_MAX_SET - 1);
 }
 
 void	

@@ -20,6 +20,10 @@ sfc_app_default_alloc(
 	const char*	file,
 	int			line)
 {
+	SFC_UNUSED(user_data);
+	SFC_UNUSED(file);
+	SFC_UNUSED(line);
+
 	return realloc(realloc_memory, size);
 }
 
@@ -28,6 +32,8 @@ sfc_app_default_free(
 	void*		user_data,
 	void*		memory)
 {
+	SFC_UNUSED(user_data);
+
 	free(memory);
 }
 
@@ -35,6 +41,8 @@ static uint64_t
 sfc_app_default_get_timer(
 	void*		user_data)
 {
+	SFC_UNUSED(user_data);
+
 	#if defined(WIN32)
 		
 		return (uint64_t)GetTickCount64();
@@ -55,6 +63,8 @@ sfc_app_default_sleep(
 	void*		user_data,
 	uint32_t	sleep_ms)
 {
+	SFC_UNUSED(user_data);
+
 	#if defined(WIN32)
 
 		Sleep((DWORD)sleep_ms);
