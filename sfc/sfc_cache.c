@@ -240,7 +240,7 @@ sfc_cache_save(
 	char temp_path[256];
 
 	int required = snprintf(temp_path, sizeof(temp_path), "%s.tmp", path);
-	if(required > sizeof(temp_path))
+	if(required > (int)sizeof(temp_path))
 		return SFC_RESULT_BUFFER_TOO_SMALL;
 
 	{

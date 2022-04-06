@@ -96,6 +96,8 @@ sfc_app_init_curl(
 		app->http_destroy_context = sfc_curl_destroy;
 		app->http_update_context = sfc_curl_update;
 		app->http_poll = sfc_curl_poll;
+	#else
+		SFC_UNUSED(app);
 	#endif
 }
 
