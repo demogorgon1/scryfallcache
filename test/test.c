@@ -127,7 +127,7 @@ test_debug_print_allocations(
 	printf("total allocations: %u (%u bytes)\n", (uint32_t)user_data->total_alloc_count, (uint32_t)user_data->total_alloc_size);
 
 	for(test_memory_header* t = user_data->allocations.head; t != NULL; t = t->next)
-		printf("%s:%d: %p (%u bytes)\n", t->file, t->line, t + 1, (uint32_t)t->size);
+		printf("%s:%d: %p (%u bytes)\n", t->file, t->line, (void*)(t + 1), (uint32_t)t->size);
 }
 
 void*
