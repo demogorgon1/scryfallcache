@@ -15,31 +15,14 @@ else()
 	)
 endif()
 
-add_library(sfc STATIC
-	sfc_app.c
-	sfc_buffer.c
-	sfc_buffer.h
-	sfc_cache.c
-	sfc_card.c
-	sfc_card_array.c
-	sfc_card_map_uint32.c
-	sfc_card_map_uint32.h
-	sfc_card_set.c
-	sfc_card_set.h
-	sfc_curl.c
-	sfc_debug.c
-	sfc_deserializer.c
-	sfc_deserializer.h
-	sfc_file.c
-	sfc_file.h
-	sfc_leaky_bucket.c
-	sfc_leaky_bucket.h
-	sfc_query.c
-	sfc_serializer.c
-	sfc_serializer.h
-	sfc_string_set.c
-	sfc_string_set.h
-)
+file(GLOB C_FILES "*.c")
+file(GLOB H_FILES "*.h")
+
+if(NOT SFC_CURL)
+	list(REMOVE_ITEM C_FILES "sfc_curl.c")
+endif()
+
+add_library(sfc STATIC ${C_FILES} ${H_FILES})
 
 add_library(sfc::sfc ALIAS sfc)
 
