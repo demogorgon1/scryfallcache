@@ -19,7 +19,7 @@ file(GLOB C_FILES "*.c")
 file(GLOB H_FILES "*.h")
 
 if(NOT SFC_CURL)
-	list(REMOVE_ITEM C_FILES "sfc_curl.c")
+	list(FILTER C_FILES EXCLUDE REGEX ".*sfc_curl\\.c$")
 endif()
 
 add_library(sfc STATIC ${C_FILES} ${H_FILES})
