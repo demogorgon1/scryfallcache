@@ -450,7 +450,11 @@ sfc_query_wait(
 				return SFC_RESULT_TIMED_OUT;
 		}
 
-		query->cache->app->sleep(query->cache->app->user_data, 100);
+		if(query->state == SFC_QUERY_STATE_WAITING_FOR_HTTP_COMPLETION)
+		{
+			/* Only sleep if we're waiting for IO */
+			query->cache->app->sleep(query->cache->app->user_data, 100);
+		}
 
 		sfc_result update_result = sfc_cache_update(query->cache);
 		if(update_result != SFC_RESULT_OK)
