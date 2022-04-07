@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-add_compile_definitions(
-	_CRT_SECURE_NO_WARNINGS
-)
-
 if(SFC_CURL)
 	include_directories(
 		include

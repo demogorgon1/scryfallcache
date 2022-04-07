@@ -155,6 +155,9 @@ sfc_result		sfc_card_deserialize(
 void			sfc_card_debug_print(
 					sfc_card*					card);
 
+void			sfc_card_key_debug_print(
+					const sfc_card_key*			card_key);
+
 const char*		sfc_card_get_string(
 					sfc_card*					card,
 					sfc_card_string				card_string);

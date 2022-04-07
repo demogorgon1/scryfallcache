@@ -693,10 +693,17 @@ sfc_card_debug_print(
 	printf("data.timestamp: %u\n", (uint32_t)card->data.timestamp);
 }
 
+void			
+sfc_card_key_debug_print(
+	const sfc_card_key*	card_key)
+{
+	printf("%s (%u) %s\n", card_key->name, card_key->version, card_key->set);
+}
+
 const char* 
 sfc_card_get_string(
-	sfc_card*		card,
-	sfc_card_string	card_string)
+	sfc_card*			card,
+	sfc_card_string		card_string)
 {
 	if(card_string >= 0 && card_string < SFC_CARD_STRING_COUNT)
 	{
