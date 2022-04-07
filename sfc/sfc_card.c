@@ -475,10 +475,25 @@ sfc_card_parse_json(
 
 				{
 					size_t len = strlen(value);
-					if(len > 0 && isalpha(value[len - 1]))
+					if (len > 0)
 					{
-						card->key.version = 1 + (uint8_t)(value[len - 1] - 'a');
-						value[len - 1] = '\0';
+						if (len > 3 &&
+							(uint8_t)value[len - 3] == 0xE2 &&
+							(uint8_t)value[len - 2] == 0x80 &&
+							(uint8_t)value[len - 1] == 0xA0)
+						{
+							/* Some card varirations have a little unicode cross at the end of
+							   their collector number.*/
+
+							   /* FIXME: this isn't supported correctly... for now we'll just ignore it */
+
+							value[len - 3] = '\0';
+						}
+						else if (isalpha(value[len - 1]))
+						{
+							card->key.version = 1 + (uint8_t)(value[len - 1] - 'a');
+							value[len - 1] = '\0';
+						}
 					}
 				}
 

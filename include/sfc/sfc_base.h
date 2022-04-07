@@ -1,6 +1,7 @@
 #ifndef __SCRYFALLCACHE_BASE_H__
 #define	__SCRYFALLCACHE_BASE_H__
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef  __cplusplus
