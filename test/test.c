@@ -718,6 +718,38 @@ test_cache()
 		}
 	}
 
+	/* Query a card by set and collector number, should be in the cache */
+	{
+		sfc_query* query = sfc_cache_query_set_collector_number(cache, "test", "2a");
+		
+		/* Update query until completed */
+		{
+			TEST_ASSERT(query != NULL);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+		}
+
+
+		/* Verify that we got the expected result */
+		{
+			TEST_ASSERT(query->results->count == 1);
+
+			{
+				sfc_card* card = query->results->cards[0];
+				TEST_ASSERT(strcmp(card->key.name, "test2a") == 0);
+				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.version == 1);
+			}
+		}
+
+		/* Delete query */
+		{
+			sfc_query_delete(query);
+			sfc_cache_update(cache);
+			TEST_ASSERT(cache->first_query == NULL);
+			TEST_ASSERT(cache->last_query == NULL);
+		}
+	}
+
 	/* Destroy cache and check that we're still not leaking memory */
 	sfc_cache_destroy(cache);
 
@@ -1022,20 +1054,45 @@ test_serializer()
 		sfc_cache* cache = sfc_cache_create(&app, 9);
 		TEST_ASSERT(cache != NULL);
 
-		sfc_query* query1 = sfc_cache_query_cardmarket_id(cache, 999);
-		sfc_query* query2 = sfc_cache_query_cardmarket_id(cache, 1000);
-		TEST_ASSERT(query1 != NULL);
-		TEST_ASSERT(query2 != NULL);
-		TEST_ASSERT(sfc_query_wait(query1, 20 * 1000) == SFC_RESULT_OK);
-		TEST_ASSERT(sfc_query_wait(query2, 20 * 1000) == SFC_RESULT_OK);
-		TEST_ASSERT(query1->result == SFC_RESULT_OK);
-		TEST_ASSERT(query2->result == SFC_RESULT_OK);
-		TEST_ASSERT(query1->results->count == 1);
-		TEST_ASSERT(query2->results->count == 1);
-		sfc_card* card1 = query1->results->cards[0];
-		sfc_card* card2 = query2->results->cards[0];
-		TEST_ASSERT(strcmp(card1->key.name, "Daru Warchief") == 0);
-		TEST_ASSERT(strcmp(card2->key.name, "Dawn Elemental") == 0);
+		/* Grab two cards concurrently */
+		{
+			sfc_query* query1 = sfc_cache_query_cardmarket_id(cache, 999);
+			sfc_query* query2 = sfc_cache_query_cardmarket_id(cache, 1000);
+			TEST_ASSERT(query1 != NULL);
+			TEST_ASSERT(query2 != NULL);
+			TEST_ASSERT(sfc_query_wait(query1, 20 * 1000) == SFC_RESULT_OK);
+			TEST_ASSERT(sfc_query_wait(query2, 20 * 1000) == SFC_RESULT_OK);
+			TEST_ASSERT(query1->result == SFC_RESULT_OK);
+			TEST_ASSERT(query2->result == SFC_RESULT_OK);
+			TEST_ASSERT(query1->results->count == 1);
+			TEST_ASSERT(query2->results->count == 1);
+			sfc_card* card1 = query1->results->cards[0];
+			sfc_card* card2 = query2->results->cards[0];
+			TEST_ASSERT(strcmp(card1->key.name, "Daru Warchief") == 0);
+			TEST_ASSERT(strcmp(card2->key.name, "Dawn Elemental") == 0);
+		}
+
+		/* Grab a card by collector number (without version tag) */
+		{
+			sfc_query* query = sfc_cache_query_set_collector_number(cache, "lea", "286");
+			TEST_ASSERT(query != NULL);
+			TEST_ASSERT(sfc_query_wait(query, 20 * 1000) == SFC_RESULT_OK);
+			TEST_ASSERT(query->result == SFC_RESULT_OK);
+			TEST_ASSERT(query->results->count == 1);
+			sfc_card* card = query->results->cards[0];
+			TEST_ASSERT(strcmp(card->key.name, "Plains") == 0);
+		}
+
+		/* Grab a card by collector number (with version tag) */
+		{
+			sfc_query* query = sfc_cache_query_set_collector_number(cache, "atq", "80b");
+			TEST_ASSERT(query != NULL);
+			TEST_ASSERT(sfc_query_wait(query, 20 * 1000) == SFC_RESULT_OK);
+			TEST_ASSERT(query->result == SFC_RESULT_OK);
+			TEST_ASSERT(query->results->count == 1);
+			sfc_card* card = query->results->cards[0];
+			TEST_ASSERT(strcmp(card->key.name, "Mishra's Factory") == 0);
+		}
 
 		sfc_cache_destroy(cache);
 

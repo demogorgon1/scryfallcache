@@ -11,6 +11,7 @@ extern "C"
 
 #define SFC_MAX_NAME								121
 #define SFC_MAX_SET									6
+#define SFC_MAX_COLLECTOR_NUMBER_STRING				12
 
 #define SFC_RESULT_OK								0
 #define SFC_RESULT_HTTP_PROTOCOL_ERROR				-1

@@ -157,6 +157,19 @@ sfc_cache_query_set(
 	return query;
 }
 
+struct _sfc_query* 
+sfc_cache_query_set_collector_number(
+	sfc_cache*					cache,
+	const char*					set,
+	const char*					collector_number_string)
+{
+	sfc_query* query = sfc_cache_create_query(cache);
+
+	sfc_query_init_set_collector_number(query, cache, set, collector_number_string);
+
+	return query;
+}
+
 sfc_result			
 sfc_cache_update(
 	sfc_cache*					cache)

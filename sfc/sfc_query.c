@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sfc/sfc_app.h>
@@ -127,6 +128,52 @@ sfc_query_update_init(
 			query->next_collector_number = 1;
 			query->next_collector_number_version = 0;
 			query->state = SFC_QUERY_STATE_GET_NEXT_IN_SET;
+		}
+		break;
+
+	case SFC_QUERY_TYPE_SET_COLLECTOR_NUMBER:
+		{
+			const char* num_string = query->u.set_collector_number.collector_number_string;
+			const char* set = query->u.set_collector_number.set;
+			uint8_t version = 0;
+
+			size_t len = strlen(num_string);
+			if(len > 0 && num_string[len - 1] >= 'a' && num_string[len - 1] <= 'z')
+			{
+				/* Collector number includes a version specifier */
+				version = (uint8_t)((num_string[len - 1] - 'a') + 1);
+			}
+
+			uint16_t num = (uint16_t)strtoul(num_string, NULL, 10);
+			
+			/* Scan through cache for this */
+			/* FIXME: some lookup table */
+			for (sfc_card* card = query->cache->first_card; card != NULL; card = card->next)
+			{
+				if(strcmp(card->key.set, set) == 0 && 
+					card->key.version == version &&
+					card->data.collector_number == num)
+				{
+					sfc_card_array_add(query->results, card);			
+					query->result = SFC_RESULT_OK;
+					query->state = SFC_QUERY_STATE_COMPLETED;
+					break;
+				}
+			}
+
+			if(query->state != SFC_QUERY_STATE_COMPLETED)
+			{
+				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/%s/%s", set, num_string);
+				if (required > (int)sizeof(query->http_get_url))
+				{
+					query->state = SFC_QUERY_STATE_COMPLETED;
+					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+				}
+				else
+				{
+					query->state = SFC_QUERY_STATE_HTTP_GET;
+				}
+			}
 		}
 		break;
 
@@ -397,6 +444,21 @@ sfc_query_init_set(
 	query->cache = cache;
 
 	strncpy(query->u.set, set, SFC_MAX_SET - 1);
+}
+
+void		
+sfc_query_init_set_collector_number(
+	sfc_query*			query,
+	struct _sfc_cache*	cache,
+	const char*			set,
+	const char*			collector_number_string)
+{
+	query->state = SFC_QUERY_STATE_INIT;
+	query->type = SFC_QUERY_TYPE_SET_COLLECTOR_NUMBER;
+	query->cache = cache;
+
+	strncpy(query->u.set_collector_number.set, set, SFC_MAX_SET - 1);
+	strncpy(query->u.set_collector_number.collector_number_string, collector_number_string, SFC_MAX_COLLECTOR_NUMBER_STRING - 1);
 }
 
 void	

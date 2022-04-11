@@ -56,6 +56,11 @@ struct _sfc_query*		sfc_cache_query_set(
 							sfc_cache*					cache,
 							const char*					set);
 
+struct _sfc_query*		sfc_cache_query_set_collector_number(
+							sfc_cache*					cache,
+							const char*					set,
+							const char*					collector_number_string);
+
 sfc_result				sfc_cache_update(
 							sfc_cache*					cache);
 
