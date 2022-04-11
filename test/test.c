@@ -290,7 +290,7 @@ test_http_get(
 	context->request_count++;
 	
 	if(strcmp(url, "https://api.scryfall.com/cards/cardmarket/5013") == 0 ||
-		strcmp(url, "https://api.scryfall.com/cards/named?exact=Castle&set=2ed") == 0)
+		strcmp(url, "https://api.scryfall.com/cards/2ed/9") == 0)
 	{		
 		req->result = test_strdup_no_null_term(context->app, g_test_json_cardmarket_id_5013, &req->size);
 	}
@@ -382,19 +382,18 @@ void
 test_verify_cardmarket_5013(
 	sfc_card*			card)
 {
-	TEST_ASSERT(strcmp(card->key.name, "Castle") == 0);
 	TEST_ASSERT(strcmp(card->key.set, "2ed") == 0);
+	TEST_ASSERT(card->key.collector_number == 9);
 	TEST_ASSERT(card->key.version == 0);
 	TEST_ASSERT(card->data.flags & SFC_CARD_CARDMARKET_ID);
 	TEST_ASSERT(card->data.cardmarket_id == 5013);
 	TEST_ASSERT(card->data.flags & SFC_CARD_TCGPLAYER_ID);
 	TEST_ASSERT(card->data.tcgplayer_id == 9000);
-	TEST_ASSERT(card->data.flags & SFC_CARD_COLLECTOR_NUMBER);
-	TEST_ASSERT(card->data.collector_number == 9);
 	TEST_ASSERT(card->data.flags & SFC_CARD_COLOR_IDENTITY);
 	TEST_ASSERT(card->data.color_identity == SFC_CARD_COLOR_WHITE);
 	TEST_ASSERT(card->data.flags & SFC_CARD_COLORS);
 	TEST_ASSERT(card->data.colors == SFC_CARD_COLOR_WHITE);
+	TEST_ASSERT(strcmp(sfc_card_get_string(card, SFC_CARD_STRING_NAME), "Castle") == 0);
 	TEST_ASSERT(strcmp(sfc_card_get_string(card, SFC_CARD_STRING_RELEASED_AT), "1993-12-01") == 0);
 	TEST_ASSERT(strcmp(sfc_card_get_string(card, SFC_CARD_STRING_LANGUAGE), "en") == 0);
 	TEST_ASSERT(strcmp(sfc_card_get_string(card, SFC_CARD_STRING_SET_NAME), "Unlimited Edition") == 0);
@@ -583,7 +582,7 @@ test_cache()
 
 	/* Query the same card by its key */
 	{
-		sfc_card_key key = { "Castle", "2ed", 0 };
+		sfc_card_key key = { "2ed", 9, 0 };
 		sfc_query* query = sfc_cache_query_card_key(cache, &key);
 
 		/* Update query until completed */
@@ -619,7 +618,7 @@ test_cache()
 
 	/* Try making two card key requests for the same card at the same time */
 	{
-		sfc_card_key key = { "Castle", "2ed", 0 };
+		sfc_card_key key = { "2ed", 9, 0 };
 		sfc_query* query1 = sfc_cache_query_card_key(cache, &key);
 		sfc_query* query2 = sfc_cache_query_card_key(cache, &key);
 
@@ -675,69 +674,37 @@ test_cache()
 
 			{
 				sfc_card* card = query->results->cards[0];
-				TEST_ASSERT(strcmp(card->key.name, "test1") == 0);
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.collector_number == 1);
 				TEST_ASSERT(card->key.version == 0);
 			}
 
 			{
 				sfc_card* card = query->results->cards[1];
-				TEST_ASSERT(strcmp(card->key.name, "test2a") == 0);
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.collector_number == 2);
 				TEST_ASSERT(card->key.version == 1);
 			}
 
 			{
 				sfc_card* card = query->results->cards[2];
-				TEST_ASSERT(strcmp(card->key.name, "test2b") == 0);
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.collector_number == 2);
 				TEST_ASSERT(card->key.version == 2);
 			}
 
 			{
 				sfc_card* card = query->results->cards[3];
-				TEST_ASSERT(strcmp(card->key.name, "test2c") == 0);
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.collector_number == 2);
 				TEST_ASSERT(card->key.version == 3);
 			}
 
 			{
 				sfc_card* card = query->results->cards[4];
-				TEST_ASSERT(strcmp(card->key.name, "test3") == 0);
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
+				TEST_ASSERT(card->key.collector_number == 3);
 				TEST_ASSERT(card->key.version == 0);
-			}
-		}
-
-		/* Delete query */
-		{
-			sfc_query_delete(query);
-			sfc_cache_update(cache);
-			TEST_ASSERT(cache->first_query == NULL);
-			TEST_ASSERT(cache->last_query == NULL);
-		}
-	}
-
-	/* Query a card by set and collector number, should be in the cache */
-	{
-		sfc_query* query = sfc_cache_query_set_collector_number(cache, "test", "2a");
-		
-		/* Update query until completed */
-		{
-			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
-		}
-
-
-		/* Verify that we got the expected result */
-		{
-			TEST_ASSERT(query->results->count == 1);
-
-			{
-				sfc_card* card = query->results->cards[0];
-				TEST_ASSERT(strcmp(card->key.name, "test2a") == 0);
-				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.version == 1);
 			}
 		}
 
@@ -860,9 +827,9 @@ test_card_set()
 		TEST_ASSERT(cards[i] != NULL);
 
 		/* Make up some unique key */
-		snprintf(cards[i]->key.name, sizeof(cards[i]->key.name), "n%u", (uint32_t)i);
 		snprintf(cards[i]->key.set, sizeof(cards[i]->key.set), "s%u", (uint32_t)i);
 		cards[i]->key.version = (uint8_t)(i % 4);
+		cards[i]->key.collector_number = (uint16_t)i;
 	}
 
 	/* Create card set */
@@ -885,7 +852,7 @@ test_card_set()
 
 	/* Check non existing card */
 	{
-		sfc_card_key key = {"not there", "", 0};
+		sfc_card_key key = {"xxx", 0, 0};
 		TEST_ASSERT(!sfc_card_set_has(card_set, &key));
 		TEST_ASSERT(sfc_card_set_get(card_set, &key) == NULL);
 	}
@@ -1068,30 +1035,8 @@ test_serializer()
 			TEST_ASSERT(query2->results->count == 1);
 			sfc_card* card1 = query1->results->cards[0];
 			sfc_card* card2 = query2->results->cards[0];
-			TEST_ASSERT(strcmp(card1->key.name, "Daru Warchief") == 0);
-			TEST_ASSERT(strcmp(card2->key.name, "Dawn Elemental") == 0);
-		}
-
-		/* Grab a card by collector number (without version tag) */
-		{
-			sfc_query* query = sfc_cache_query_set_collector_number(cache, "lea", "286");
-			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(sfc_query_wait(query, 20 * 1000) == SFC_RESULT_OK);
-			TEST_ASSERT(query->result == SFC_RESULT_OK);
-			TEST_ASSERT(query->results->count == 1);
-			sfc_card* card = query->results->cards[0];
-			TEST_ASSERT(strcmp(card->key.name, "Plains") == 0);
-		}
-
-		/* Grab a card by collector number (with version tag) */
-		{
-			sfc_query* query = sfc_cache_query_set_collector_number(cache, "atq", "80b");
-			TEST_ASSERT(query != NULL);
-			TEST_ASSERT(sfc_query_wait(query, 20 * 1000) == SFC_RESULT_OK);
-			TEST_ASSERT(query->result == SFC_RESULT_OK);
-			TEST_ASSERT(query->results->count == 1);
-			sfc_card* card = query->results->cards[0];
-			TEST_ASSERT(strcmp(card->key.name, "Mishra's Factory") == 0);
+			TEST_ASSERT(strcmp(sfc_card_get_string(card1, SFC_CARD_STRING_NAME), "Daru Warchief") == 0);
+			TEST_ASSERT(strcmp(sfc_card_get_string(card2, SFC_CARD_STRING_NAME), "Dawn Elemental") == 0);
 		}
 
 		sfc_cache_destroy(cache);

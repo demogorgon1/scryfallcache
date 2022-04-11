@@ -52,6 +52,7 @@ typedef struct _sfc_card_string_entry
 static sfc_card_string_entry g_sfc_card_string_entries[] = 
 {
 	/* Root values */
+	{ NULL,			"name",								SFC_CARD_STRING_NAME						},
 	{ NULL,			"released_at",						SFC_CARD_STRING_RELEASED_AT					},
 	{ NULL,			"rarity",							SFC_CARD_STRING_RARITY						},
 	{ NULL,			"lang",								SFC_CARD_STRING_LANGUAGE					},
@@ -426,16 +427,7 @@ sfc_card_parse_json(
 
 		case JSMN_STRING:
 		case JSMN_PRIMITIVE:
-			if (strcmp(key, "name") == 0)
-			{
-				const char* value;
-				JSON_GET_STRING(value);
-				size_t len = strlen(value);
-				if(len >= SFC_MAX_NAME)
-					return SFC_RESULT_JSON_NAME_TOO_LONG;
-				strcpy(card->key.name, value);
-			}
-			else if (strcmp(key, "set") == 0)
+			if (strcmp(key, "set") == 0)
 			{
 				const char* value;
 				JSON_GET_STRING(value);
@@ -471,7 +463,6 @@ sfc_card_parse_json(
 			{
 				char* value;
 				JSON_GET_STRING(value);
-				card->data.flags |= SFC_CARD_COLLECTOR_NUMBER;
 
 				{
 					size_t len = strlen(value);
@@ -485,7 +476,7 @@ sfc_card_parse_json(
 							/* Some card varirations have a little unicode cross at the end of
 							   their collector number.*/
 
-							   /* FIXME: this isn't supported correctly... for now we'll just ignore it */
+							/* FIXME: this isn't supported correctly... for now we'll just ignore it */
 
 							value[len - 3] = '\0';
 						}
@@ -502,7 +493,7 @@ sfc_card_parse_json(
 					if(temp > UINT16_MAX)
 						return SFC_RESULT_JSON_COLLECTOR_NUMBER_TOO_LARGE;
 						
-					card->data.collector_number = (uint16_t)temp;
+					card->key.collector_number = (uint16_t)temp;
 				}
 			}
 			else
@@ -526,11 +517,11 @@ sfc_card_parse_json(
 			
 	}
 
-	if(card->key.name[0] == '\0')
-		return SFC_RESULT_JSON_NO_NAME;
-
 	if (card->key.set[0] == '\0')
 		return SFC_RESULT_JSON_NO_SET;
+
+	if(card->key.collector_number == 0)
+		return SFC_RESULT_JSON_NO_COLLECTOR_NUMBER;
 
 	card->data.string_data = json;
 	card->data.string_data_size = (uint32_t)json_size;
@@ -546,7 +537,7 @@ sfc_card_serialize(
 	sfc_card_shrink_string_data(card);
 
 	/* Key */
-	SFC_SERIALIZER_WRITE_STRING(serializer, card->key.name);
+	SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, (uint32_t)card->key.collector_number);
 	SFC_SERIALIZER_WRITE_STRING(serializer, card->key.set);
 	SFC_SERIALIZER_WRITE_UINT8(serializer, card->key.version);
 
@@ -574,9 +565,6 @@ sfc_card_serialize(
 	if (card->data.flags & SFC_CARD_CARDMARKET_ID)
 		SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, card->data.cardmarket_id);
 
-	if (card->data.flags & SFC_CARD_COLLECTOR_NUMBER)
-		SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, (uint32_t)card->data.collector_number);
-
 	if (card->data.flags & SFC_CARD_COLOR_IDENTITY)
 		SFC_SERIALIZER_WRITE_UINT8(serializer, (uint32_t)card->data.color_identity);
 
@@ -592,7 +580,15 @@ sfc_card_deserialize(
 	struct _sfc_deserializer*	deserializer)
 {
 	/* Key */
-	SFC_DESERIALIZER_READ_STRING(deserializer, card->key.name, sizeof(card->key.name));
+	{
+		uint32_t temp;
+		SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &temp);
+		if (temp > UINT16_MAX)
+			return SFC_RESULT_UINT16_TOO_BIG;
+
+		card->key.collector_number = (uint16_t)temp;
+	}
+
 	SFC_DESERIALIZER_READ_STRING(deserializer, card->key.set, sizeof(card->key.set));
 	SFC_DESERIALIZER_READ_UINT8(deserializer, &card->key.version);
 
@@ -630,16 +626,6 @@ sfc_card_deserialize(
 	if (card->data.flags & SFC_CARD_CARDMARKET_ID)
 		SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &card->data.cardmarket_id);
 
-	if (card->data.flags & SFC_CARD_COLLECTOR_NUMBER)
-	{
-		uint32_t temp;
-		SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &temp);
-		if(temp > UINT16_MAX)
-			return SFC_RESULT_UINT16_TOO_BIG;
-
-		card->data.collector_number = (uint16_t)temp;
-	}
-
 	if (card->data.flags & SFC_CARD_COLOR_IDENTITY)
 		SFC_DESERIALIZER_READ_UINT8(deserializer, &card->data.color_identity);
 
@@ -659,8 +645,8 @@ void
 sfc_card_debug_print(
 	sfc_card*		card)
 {
-	printf("key.name: %s\n", card->key.name);
 	printf("key.set: %s\n", card->key.set);
+	printf("key.collector_number: %u\n", card->key.collector_number);
 	printf("key.version: %u\n", card->key.version);
 	
 	printf("data.flags:");
@@ -671,8 +657,6 @@ sfc_card_debug_print(
 		printf(" TCGPLAYER_ID");
 	if (card->data.flags & SFC_CARD_CARDMARKET_ID)
 		printf(" CARDMARKET_ID");
-	if (card->data.flags & SFC_CARD_COLLECTOR_NUMBER)
-		printf(" COLLECTOR_NUMBER");
 	if (card->data.flags & SFC_CARD_IS_SHRUNK)
 		printf(" IS_SHRUNK");
 	if (card->data.flags & SFC_CARD_COLORS)
@@ -684,7 +668,6 @@ sfc_card_debug_print(
 
 	printf("data.tcg_player_id: %u\n", card->data.tcgplayer_id);
 	printf("data.cardmarket_id: %u\n", card->data.cardmarket_id);
-	printf("data.collector_number: %u\n", card->data.collector_number);
 	printf("data.colors: %x\n", card->data.colors);
 	printf("data.color_identity: %x\n", card->data.color_identity);
 
@@ -712,7 +695,7 @@ void
 sfc_card_key_debug_print(
 	const sfc_card_key*	card_key)
 {
-	printf("%s (%u) %s\n", card_key->name, card_key->version, card_key->set);
+	printf("%s %u (%u)\n", card_key->set, card_key->collector_number, card_key->version);
 }
 
 const char* 

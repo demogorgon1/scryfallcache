@@ -9,9 +9,8 @@ extern "C"
 {
 #endif
 
-#define SFC_MAX_NAME								121
-#define SFC_MAX_SET									6
-#define SFC_MAX_COLLECTOR_NUMBER_STRING				12
+#define SFC_MAX_SET									5
+#define SFC_MAX_COLLECTOR_NUMBER_STRING				16
 
 #define SFC_RESULT_OK								0
 #define SFC_RESULT_HTTP_PROTOCOL_ERROR				-1
@@ -20,7 +19,7 @@ extern "C"
 #define SFC_RESULT_JSON_RESPONSE_ERROR				-5
 #define SFC_RESULT_JSON_NAME_TOO_LONG				-6
 #define SFC_RESULT_JSON_SET_TOO_LONG				-7
-#define SFC_RESULT_JSON_NO_NAME						-8
+#define SFC_RESULT_JSON_NO_COLLECTOR_NUMBER			-8
 #define SFC_RESULT_JSON_NO_SET						-9
 #define SFC_RESULT_JSON_COLLECTOR_NUMBER_TOO_LARGE	-10
 #define SFC_RESULT_NOT_FOUND						-11

@@ -23,13 +23,13 @@ struct _sfc_serializer;
 #define SFC_CARD_IS_CARD			0x00000001
 #define SFC_CARD_TCGPLAYER_ID		0x00000002
 #define SFC_CARD_CARDMARKET_ID		0x00000004
-#define SFC_CARD_COLLECTOR_NUMBER	0x00000008
-#define SFC_CARD_IS_SHRUNK			0x00000010
-#define SFC_CARD_COLORS				0x00000020
-#define SFC_CARD_COLOR_IDENTITY		0x00000040
+#define SFC_CARD_IS_SHRUNK			0x00000008
+#define SFC_CARD_COLORS				0x00000010
+#define SFC_CARD_COLOR_IDENTITY		0x00000020
 
 typedef enum _sfc_card_string
 {
+	SFC_CARD_STRING_NAME,
 	SFC_CARD_STRING_RELEASED_AT,
 	SFC_CARD_STRING_RARITY,
 	SFC_CARD_STRING_LANGUAGE,
@@ -99,8 +99,8 @@ typedef enum _sfc_card_string
 
 typedef struct _sfc_card_key
 {
-	char					name[SFC_MAX_NAME];
 	char					set[SFC_MAX_SET];
+	uint16_t				collector_number;
 	uint8_t					version;
 } sfc_card_key;
 
@@ -112,7 +112,6 @@ typedef struct _sfc_card_data
 
 	uint32_t				tcgplayer_id;
 	uint32_t				cardmarket_id;
-	uint16_t				collector_number;
 	uint8_t					colors;
 	uint8_t					color_identity;
 

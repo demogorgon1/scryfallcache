@@ -60,7 +60,28 @@ sfc_query_update_init(
 			}
 			else
 			{
-				char temp[1024];
+				char version_tag = '\0';
+
+				if(query->u.card_key.version != 0)
+				{
+					version_tag = 'a' + query->u.card_key.version - 1;
+				}
+
+				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/%s/%u%c", 
+					query->u.card_key.set,
+					query->u.card_key.collector_number,
+					version_tag);
+				if (required > (int)sizeof(query->http_get_url))
+				{
+					query->state = SFC_QUERY_STATE_COMPLETED;
+					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+				}
+				else
+				{
+					query->state = SFC_QUERY_STATE_HTTP_GET;
+				}
+
+				/*char temp[1024];
 				size_t offset = 0;
 
 				for (const char* p = query->u.card_key.name; *p != '\0'; p++)
@@ -106,7 +127,7 @@ sfc_query_update_init(
 				else
 				{
 					query->state = SFC_QUERY_STATE_HTTP_GET;
-				}				
+				}		*/		
 			}
 		}
 		break;
@@ -131,52 +152,6 @@ sfc_query_update_init(
 		}
 		break;
 
-	case SFC_QUERY_TYPE_SET_COLLECTOR_NUMBER:
-		{
-			const char* num_string = query->u.set_collector_number.collector_number_string;
-			const char* set = query->u.set_collector_number.set;
-			uint8_t version = 0;
-
-			size_t len = strlen(num_string);
-			if(len > 0 && num_string[len - 1] >= 'a' && num_string[len - 1] <= 'z')
-			{
-				/* Collector number includes a version specifier */
-				version = (uint8_t)((num_string[len - 1] - 'a') + 1);
-			}
-
-			uint16_t num = (uint16_t)strtoul(num_string, NULL, 10);
-			
-			/* Scan through cache for this */
-			/* FIXME: some lookup table */
-			for (sfc_card* card = query->cache->first_card; card != NULL; card = card->next)
-			{
-				if(strcmp(card->key.set, set) == 0 && 
-					card->key.version == version &&
-					card->data.collector_number == num)
-				{
-					sfc_card_array_add(query->results, card);			
-					query->result = SFC_RESULT_OK;
-					query->state = SFC_QUERY_STATE_COMPLETED;
-					break;
-				}
-			}
-
-			if(query->state != SFC_QUERY_STATE_COMPLETED)
-			{
-				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/%s/%s", set, num_string);
-				if (required > (int)sizeof(query->http_get_url))
-				{
-					query->state = SFC_QUERY_STATE_COMPLETED;
-					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
-				}
-				else
-				{
-					query->state = SFC_QUERY_STATE_HTTP_GET;
-				}
-			}
-		}
-		break;
-
 	default:
 		assert(0);
 		break;
@@ -197,8 +172,7 @@ sfc_query_update_get_next_in_set(
 	{
 		if (strcmp(card->key.set, query->u.set) == 0 &&
 			card->key.version == query->next_collector_number_version &&
-			card->data.flags & SFC_CARD_COLLECTOR_NUMBER &&
-			card->data.collector_number == query->next_collector_number)
+			card->key.collector_number == query->next_collector_number)
 		{
 			if (query->next_collector_number_version > 0)
 				query->next_collector_number_version++;
@@ -372,23 +346,15 @@ sfc_query_update_parse_result(
 				}
 				else
 				{
-					if ((card->data.flags & SFC_CARD_COLLECTOR_NUMBER) == 0)
-					{
-						query->result = SFC_RESULT_MISSING_COLLECTORS_NUMBER;
-						query->state = SFC_QUERY_STATE_COMPLETED;
-					}
-					else
-					{
-						snprintf(
-							query->http_get_url,
-							sizeof(query->http_get_url) - 1,
-							"https://api.scryfall.com/cards/%s/%u%c",
-							query->u.card_key.set,
-							card->data.collector_number,
-							'a' + query->u.card_key.version - 1);
+					snprintf(
+						query->http_get_url,
+						sizeof(query->http_get_url) - 1,
+						"https://api.scryfall.com/cards/%s/%u%c",
+						query->u.card_key.set,
+						card->key.collector_number,
+						'a' + query->u.card_key.version - 1);
 
-						query->state = SFC_QUERY_STATE_HTTP_GET;
-					}
+					query->state = SFC_QUERY_STATE_HTTP_GET;
 				}
 			}
 			else
@@ -444,21 +410,6 @@ sfc_query_init_set(
 	query->cache = cache;
 
 	strncpy(query->u.set, set, SFC_MAX_SET - 1);
-}
-
-void		
-sfc_query_init_set_collector_number(
-	sfc_query*			query,
-	struct _sfc_cache*	cache,
-	const char*			set,
-	const char*			collector_number_string)
-{
-	query->state = SFC_QUERY_STATE_INIT;
-	query->type = SFC_QUERY_TYPE_SET_COLLECTOR_NUMBER;
-	query->cache = cache;
-
-	strncpy(query->u.set_collector_number.set, set, SFC_MAX_SET - 1);
-	strncpy(query->u.set_collector_number.collector_number_string, collector_number_string, SFC_MAX_COLLECTOR_NUMBER_STRING - 1);
 }
 
 void	

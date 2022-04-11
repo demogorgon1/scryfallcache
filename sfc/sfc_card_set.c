@@ -51,7 +51,7 @@ sfc_card_set_has(
 	{
 		const sfc_card* card = card_set->card_array->cards[i];
 
-		if(strcmp(card->key.name, card_key->name) == 0 &&
+		if(card->key.collector_number == card_key->collector_number &&
 			strcmp(card->key.set, card_key->set) == 0 &&
 			card->key.version == card_key->version)
 		{
@@ -71,7 +71,7 @@ sfc_card_set_get(
 	{
 		sfc_card* card = card_set->card_array->cards[i];
 
-		if (strcmp(card->key.name, card_key->name) == 0 &&
+		if (card->key.collector_number == card_key->collector_number &&
 			strcmp(card->key.set, card_key->set) == 0 &&
 			card->key.version == card_key->version)
 		{

@@ -13,8 +13,7 @@ typedef enum _sfc_query_type
 {
 	SFC_QUERY_TYPE_CARDMARKET_ID,
 	SFC_QUERY_TYPE_CARD_KEY,
-	SFC_QUERY_TYPE_SET,
-	SFC_QUERY_TYPE_SET_COLLECTOR_NUMBER
+	SFC_QUERY_TYPE_SET
 } sfc_query_type;
 
 typedef enum _sfc_query_state
@@ -38,12 +37,6 @@ typedef struct _sfc_query
 		uint32_t			cardmarket_id;
 		sfc_card_key		card_key;
 		char				set[SFC_MAX_SET];
-
-		struct _sfc_query_set_collector_number_data
-		{
-			char			set[SFC_MAX_SET];
-			char			collector_number_string[SFC_MAX_COLLECTOR_NUMBER_STRING];
-		} set_collector_number;
 	} u;
 
 	struct _sfc_cache*		cache;
@@ -77,12 +70,6 @@ void		sfc_query_init_set(
 				sfc_query*			query,
 				struct _sfc_cache*	cache,
 				const char*			set);
-
-void		sfc_query_init_set_collector_number(
-				sfc_query*			query,
-				struct _sfc_cache*	cache,
-				const char*			set,
-				const char*			collector_number_string);
 
 void		sfc_query_update(
 				sfc_query*			query);

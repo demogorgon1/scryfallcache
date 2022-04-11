@@ -157,19 +157,6 @@ sfc_cache_query_set(
 	return query;
 }
 
-struct _sfc_query* 
-sfc_cache_query_set_collector_number(
-	sfc_cache*					cache,
-	const char*					set,
-	const char*					collector_number_string)
-{
-	sfc_query* query = sfc_cache_create_query(cache);
-
-	sfc_query_init_set_collector_number(query, cache, set, collector_number_string);
-
-	return query;
-}
-
 sfc_result			
 sfc_cache_update(
 	sfc_cache*					cache)
@@ -270,7 +257,7 @@ sfc_cache_save(
 				sfc_serializer serializer;
 				sfc_serializer_init(&serializer, &buffer);
 
-				sfc_serializer_write_uint8(&serializer, 1); /* Version */
+				sfc_serializer_write_uint8(&serializer, 2); /* Version */
 				
 				sfc_string_set_serialize(cache->full_sets, &serializer);
 			}
@@ -334,6 +321,13 @@ sfc_cache_load(
 				sfc_deserializer_init(&deserializer, buffer.p, buffer.size);
 
 				result = sfc_deserializer_read_uint8(&deserializer, &format_version);
+
+				if(format_version != 2)
+				{
+					/* We can't read this old version, saved cached is invalidated. */
+					/* Behave like if the file didn't exist. */
+					result = SFC_RESULT_FILE_OPEN_ERROR;
+				}
 
 				if(result == SFC_RESULT_OK)
 					result = sfc_string_set_deserialize(cache->full_sets, &deserializer);
