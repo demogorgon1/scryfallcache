@@ -1,7 +1,7 @@
 #ifndef __SCRYFALLCACHE_COLLECTOR_NUMBER_H__
 #define __SCRYFALLCACHE_COLLECTOR_NUMBER_H__
 
-#include <sfc/sfc_base.h>
+#include "sfc_base.h"
 
 /* gggg gggg gggg fffe dccc ccbb bbba aaaa 
    

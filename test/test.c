@@ -10,7 +10,6 @@
 #include "../sfc/sfc_buffer.h"
 #include "../sfc/sfc_card_map_uint32.h"
 #include "../sfc/sfc_card_set.h"
-#include "../sfc/sfc_collector_number.h"
 #include "../sfc/sfc_deserializer.h"
 #include "../sfc/sfc_leaky_bucket.h"
 #include "../sfc/sfc_serializer.h"

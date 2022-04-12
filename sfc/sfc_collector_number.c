@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "sfc_collector_number.h"
+#include <sfc/sfc_collector_number.h>
 
 static uint8_t g_sfc_collector_number_unicode_cross[] = 
 {

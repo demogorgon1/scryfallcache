@@ -7,11 +7,11 @@
 #include <sfc/sfc_cache.h>
 #include <sfc/sfc_card.h>
 #include <sfc/sfc_card_array.h>
+#include <sfc/sfc_collector_number.h>
 #include <sfc/sfc_query.h>
 
 #include "sfc_card_map_uint32.h"
 #include "sfc_card_set.h"
-#include "sfc_collector_number.h"
 #include "sfc_leaky_bucket.h"
 #include "sfc_string_set.h"
 

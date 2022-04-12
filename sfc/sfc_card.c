@@ -7,8 +7,8 @@
 
 #include <sfc/sfc_app.h>
 #include <sfc/sfc_card.h>
+#include <sfc/sfc_collector_number.h>
 
-#include "sfc_collector_number.h"
 #include "sfc_deserializer.h"
 #include "sfc_serializer.h"
 
