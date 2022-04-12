@@ -29,7 +29,7 @@ sfc_string_set_destroy(
 	string_set->app->free(string_set->app->user_data, string_set);
 }
 
-sfc_result			
+void			
 sfc_string_set_add(
 	sfc_string_set*		string_set,
 	const char*			string)
@@ -37,7 +37,7 @@ sfc_string_set_add(
 	size_t len;
 
 	if(sfc_string_set_has(string_set, string))
-		return SFC_RESULT_OK;
+		return;
 
 	len = strlen(string);
 
@@ -50,8 +50,6 @@ sfc_string_set_add(
 	strcpy(string_set->strings[string_set->count], string);
 
 	string_set->count++;
-
-	return SFC_RESULT_OK;
 }
 
 int					

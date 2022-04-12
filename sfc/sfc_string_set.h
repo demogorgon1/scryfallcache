@@ -22,7 +22,7 @@ sfc_string_set*		sfc_string_set_create(
 void				sfc_string_set_destroy(
 						sfc_string_set*				string_set);
 
-sfc_result			sfc_string_set_add(
+void				sfc_string_set_add(
 						sfc_string_set*				string_set,
 						const char*					string);
 

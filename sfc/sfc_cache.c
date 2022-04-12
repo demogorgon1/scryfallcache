@@ -39,6 +39,7 @@ sfc_cache_create(
 
 	cache->http_request_rate_limiter = sfc_leaky_bucket_create(app, max_http_requests_per_second, max_http_requests_per_second);
 	cache->full_sets = sfc_string_set_create(app);
+	cache->bad_urls = sfc_string_set_create(app);
 	cache->card_set = sfc_card_set_create(app);
 	cache->cardmarket_id_map = sfc_card_map_uint32_create(app, 1);
 
@@ -58,6 +59,7 @@ sfc_cache_destroy(
 
 	sfc_leaky_bucket_destroy(cache->http_request_rate_limiter);
 	sfc_string_set_destroy(cache->full_sets);
+	sfc_string_set_destroy(cache->bad_urls);
 	sfc_card_set_destroy(cache->card_set);
 	sfc_card_map_uint32_destroy(cache->cardmarket_id_map);
 
@@ -248,7 +250,7 @@ sfc_cache_save(
 		if (f == NULL)
 			return SFC_RESULT_FILE_OPEN_ERROR;
 
-		/* First part: header and list of full sets */
+		/* First part: header, list of full sets, and list of bad urls */
 		{
 			sfc_buffer buffer;
 			sfc_buffer_init(&buffer, cache->app);
@@ -257,9 +259,10 @@ sfc_cache_save(
 				sfc_serializer serializer;
 				sfc_serializer_init(&serializer, &buffer);
 
-				sfc_serializer_write_uint8(&serializer, 2); /* Version */
+				sfc_serializer_write_uint8(&serializer, 3); /* Version */
 				
 				sfc_string_set_serialize(cache->full_sets, &serializer);
+				sfc_string_set_serialize(cache->bad_urls, &serializer);
 			}
 
 			result = sfc_file_write_buffer(f, &buffer);
@@ -322,15 +325,18 @@ sfc_cache_load(
 
 				result = sfc_deserializer_read_uint8(&deserializer, &format_version);
 
-				if(format_version != 2)
+				if (format_version != 2 && format_version != 3)
 				{
-					/* We can't read this old version, saved cached is invalidated. */
+					/* We can't read this old (or new?) version, saved cached is invalidated. */
 					/* Behave like if the file didn't exist. */
 					result = SFC_RESULT_FILE_OPEN_ERROR;
 				}
 
 				if(result == SFC_RESULT_OK)
 					result = sfc_string_set_deserialize(cache->full_sets, &deserializer);
+
+				if(result == SFC_RESULT_OK && format_version >= 3)
+					result = sfc_string_set_deserialize(cache->bad_urls, &deserializer);
 			}
 
 			sfc_buffer_uninit(&buffer);

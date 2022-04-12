@@ -14,6 +14,35 @@
 #include "sfc_leaky_bucket.h"
 #include "sfc_string_set.h"
 
+static void
+sfc_query_handle_set_card_not_found(
+	sfc_query*			query)
+{
+	if (query->next_collector_number_version > 0)
+	{
+		if (query->next_collector_number_version == 1)
+		{
+			/* Must have reached the end since neither "x" nor "xa" exists. */
+			query->result = SFC_RESULT_OK;
+			query->state = SFC_QUERY_STATE_COMPLETED;
+
+			/* We're now sure to have the full set, mark it as fully cached */
+			sfc_string_set_add(query->cache->full_sets, query->u.set);
+		}
+		else
+		{
+			query->next_collector_number_version = 0;
+			query->next_collector_number++;
+			query->state = SFC_QUERY_STATE_GET_NEXT_IN_SET;
+		}
+	}
+	else
+	{
+		query->next_collector_number_version = 1;
+		query->state = SFC_QUERY_STATE_GET_NEXT_IN_SET;
+	}
+}
+
 /* Update state: SFC_QUERY_STATE_INIT */
 static void
 sfc_query_update_init(
@@ -213,6 +242,21 @@ static void
 sfc_query_update_http_get(
 	sfc_query*			query)
 {
+	if(sfc_string_set_has(query->cache->bad_urls, query->http_get_url))
+	{
+		if(query->type == SFC_QUERY_TYPE_SET)
+		{
+			sfc_query_handle_set_card_not_found(query);
+		}
+		else
+		{
+			query->state = SFC_QUERY_STATE_COMPLETED;
+			query->result = SFC_RESULT_NOT_FOUND;
+		}
+	
+		return;
+	}
+
 	if (!sfc_leaky_bucket_acquire_token(query->cache->http_request_rate_limiter))
 		return;
 
@@ -286,29 +330,9 @@ sfc_query_update_parse_result(
 		}
 		else if (result == SFC_RESULT_NOT_FOUND)
 		{
-			if (query->next_collector_number_version > 0)
-			{
-				if (query->next_collector_number_version == 1)
-				{
-					/* Must have reached the end since neither "x" nor "xa" exists. */
-					query->result = SFC_RESULT_OK;
-					query->state = SFC_QUERY_STATE_COMPLETED;
+			sfc_string_set_add(query->cache->bad_urls, query->http_get_url);
 
-					/* We're now sure to have the full set, mark it as fully cached */
-					sfc_string_set_add(query->cache->full_sets, query->u.set);
-				}
-				else
-				{
-					query->next_collector_number_version = 0;
-					query->next_collector_number++;
-					query->state = SFC_QUERY_STATE_GET_NEXT_IN_SET;
-				}
-			}
-			else
-			{
-				query->next_collector_number_version = 1;
-				query->state = SFC_QUERY_STATE_GET_NEXT_IN_SET;
-			}
+			sfc_query_handle_set_card_not_found(query);
 		}
 		else
 		{
@@ -365,6 +389,9 @@ sfc_query_update_parse_result(
 		}
 		else
 		{
+			if(result == SFC_RESULT_NOT_FOUND)
+				sfc_string_set_add(query->cache->bad_urls, query->http_get_url);
+
 			query->result = result;
 			query->state = SFC_QUERY_STATE_COMPLETED;
 		}

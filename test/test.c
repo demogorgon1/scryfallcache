@@ -67,7 +67,7 @@ test_assert(
 {
 	if (!result)
 	{
-		printf("FAILED: %s (%s:%d)\n", message, file, line);
+		fprintf(stderr, "FAILED: %s (%s:%d)\n", message, file, line);
 
 		exit(1);
 	}
@@ -96,6 +96,8 @@ typedef struct _test_user_data
 
 	int							auto_advance_timer;
 	uint64_t					test_timer;
+
+	size_t						total_http_request_count;
 } test_user_data;
 
 void
@@ -288,11 +290,21 @@ test_http_get(
 	req->context = context;
 
 	context->request_count++;
+
+	test_user_data* user_data = (test_user_data*)context->app->user_data;
+
+	user_data->total_http_request_count++;
 	
 	if(strcmp(url, "https://api.scryfall.com/cards/cardmarket/5013") == 0 ||
 		strcmp(url, "https://api.scryfall.com/cards/2ed/9") == 0)
 	{		
 		req->result = test_strdup_no_null_term(context->app, g_test_json_cardmarket_id_5013, &req->size);
+	}
+	else if (strcmp(url, "https://api.scryfall.com/cards/cardmarket/123456") == 0)
+	{
+		req->result = test_strdup_no_null_term(context->app,
+			"{\"object\":\"error\", \"code\":\"not_found\"}",
+			&req->size);
 	}
 	else if(strcmp(url, "https://api.scryfall.com/cards/test/1") == 0)
 	{
@@ -468,6 +480,71 @@ test_cache()
 
 	sfc_cache* cache = sfc_cache_create(&app, 9);
 	TEST_ASSERT(cache != NULL);
+
+	/* Query a cardmarket id that doesn't exist */
+	{
+		sfc_query* query = sfc_cache_query_cardmarket_id(cache, 123456);
+
+		size_t request_count_0 = test_data.total_http_request_count;
+
+		/* Update query until completed */
+		{
+			TEST_ASSERT(query != NULL);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+		}
+
+		/* Verify that we got the expected result */
+		{
+			TEST_ASSERT(query->result = SFC_RESULT_NOT_FOUND);
+			TEST_ASSERT(query->results->count == 0);
+		}
+
+		size_t request_count_1 = test_data.total_http_request_count;
+
+		/* Should have triggered 1 http request */
+		TEST_ASSERT(request_count_1 - request_count_0 == 1);
+
+		/* Delete query */
+		{
+			sfc_query_delete(query);
+			sfc_cache_update(cache);
+			TEST_ASSERT(cache->first_query == NULL);
+			TEST_ASSERT(cache->last_query == NULL);
+		}
+	}
+
+	/* Query a cardmarket id that doesn't exist again. This time it shouldn't trigger
+	   any http requests because the url will be in the "bad url" list */
+	{
+		sfc_query* query = sfc_cache_query_cardmarket_id(cache, 123456);
+
+		size_t request_count_0 = test_data.total_http_request_count;
+
+		/* Update query until completed */
+		{
+			TEST_ASSERT(query != NULL);
+			TEST_ASSERT(sfc_query_wait(query, TEST_QUERY_TIMEOUT) == SFC_RESULT_OK);
+		}
+
+		/* Verify that we got the expected result */
+		{
+			TEST_ASSERT(query->result = SFC_RESULT_NOT_FOUND);
+			TEST_ASSERT(query->results->count == 0);
+		}
+
+		size_t request_count_1 = test_data.total_http_request_count;
+
+		/* No http requests expected */
+		TEST_ASSERT(request_count_1 == request_count_0);
+
+		/* Delete query */
+		{
+			sfc_query_delete(query);
+			sfc_cache_update(cache);
+			TEST_ASSERT(cache->first_query == NULL);
+			TEST_ASSERT(cache->last_query == NULL);
+		}
+	}
 
 	/* Query cardmarket id 5013 on an empty cache */
 	{

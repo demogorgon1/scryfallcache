@@ -17,6 +17,7 @@ typedef struct _sfc_cache
 	struct _sfc_string_set*			full_sets;
 	struct _sfc_card_set*			card_set;	
 	struct _sfc_card_map_uint32*	cardmarket_id_map;
+	struct _sfc_string_set*			bad_urls;
 
 	void*							http_context;
 
