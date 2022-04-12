@@ -672,7 +672,7 @@ sfc_card_key_debug_print(
 	if(result == SFC_RESULT_OK)
 		p = temp;
 
-	printf("%s %s\n", card_key->set, temp);
+	printf("%s %s\n", card_key->set, p);
 }
 
 const char* 
