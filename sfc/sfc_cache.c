@@ -259,7 +259,7 @@ sfc_cache_save(
 				sfc_serializer serializer;
 				sfc_serializer_init(&serializer, &buffer);
 
-				sfc_serializer_write_uint8(&serializer, 3); /* Version */
+				sfc_serializer_write_uint8(&serializer, 4); /* Version */
 				
 				sfc_string_set_serialize(cache->full_sets, &serializer);
 				sfc_string_set_serialize(cache->bad_urls, &serializer);
@@ -325,7 +325,7 @@ sfc_cache_load(
 
 				result = sfc_deserializer_read_uint8(&deserializer, &format_version);
 
-				if (format_version != 2 && format_version != 3)
+				if (format_version != 4)
 				{
 					/* We can't read this old (or new?) version, saved cached is invalidated. */
 					/* Behave like if the file didn't exist. */
@@ -335,7 +335,7 @@ sfc_cache_load(
 				if(result == SFC_RESULT_OK)
 					result = sfc_string_set_deserialize(cache->full_sets, &deserializer);
 
-				if(result == SFC_RESULT_OK && format_version >= 3)
+				if(result == SFC_RESULT_OK)
 					result = sfc_string_set_deserialize(cache->bad_urls, &deserializer);
 			}
 

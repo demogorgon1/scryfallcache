@@ -398,8 +398,8 @@ test_verify_cardmarket_5013(
 	sfc_card*			card)
 {
 	TEST_ASSERT(strcmp(card->key.set, "2ed") == 0);
-	TEST_ASSERT(card->key.collector_number == 9);
-	TEST_ASSERT(card->key.version == 0);
+	TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 9);
+	TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 0);
 	TEST_ASSERT(card->data.flags & SFC_CARD_CARDMARKET_ID);
 	TEST_ASSERT(card->data.cardmarket_id == 5013);
 	TEST_ASSERT(card->data.flags & SFC_CARD_TCGPLAYER_ID);
@@ -662,7 +662,7 @@ test_cache()
 
 	/* Query the same card by its key */
 	{
-		sfc_card_key key = { "2ed", 9, 0 };
+		sfc_card_key key = { "2ed", SFC_COLLECTOR_NUMBER_MAKE(9, 0) };
 		sfc_query* query = sfc_cache_query_card_key(cache, &key);
 
 		/* Update query until completed */
@@ -698,7 +698,7 @@ test_cache()
 
 	/* Try making two card key requests for the same card at the same time */
 	{
-		sfc_card_key key = { "2ed", 9, 0 };
+		sfc_card_key key = { "2ed", SFC_COLLECTOR_NUMBER_MAKE(9, 0) };
 		sfc_query* query1 = sfc_cache_query_card_key(cache, &key);
 		sfc_query* query2 = sfc_cache_query_card_key(cache, &key);
 
@@ -755,36 +755,36 @@ test_cache()
 			{
 				sfc_card* card = query->results->cards[0];
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.collector_number == 1);
-				TEST_ASSERT(card->key.version == 0);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 1);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 0);
 			}
 
 			{
 				sfc_card* card = query->results->cards[1];
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.collector_number == 2);
-				TEST_ASSERT(card->key.version == 1);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 2);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 1);
 			}
 
 			{
 				sfc_card* card = query->results->cards[2];
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.collector_number == 2);
-				TEST_ASSERT(card->key.version == 2);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 2);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 2);
 			}
 
 			{
 				sfc_card* card = query->results->cards[3];
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.collector_number == 2);
-				TEST_ASSERT(card->key.version == 3);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 2);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 3);
 			}
 
 			{
 				sfc_card* card = query->results->cards[4];
 				TEST_ASSERT(strcmp(card->key.set, "test") == 0);
-				TEST_ASSERT(card->key.collector_number == 3);
-				TEST_ASSERT(card->key.version == 0);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER(card->key.collector_number) == 3);
+				TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number) == 0);
 			}
 		}
 
@@ -908,7 +908,6 @@ test_card_set()
 
 		/* Make up some unique key */
 		snprintf(cards[i]->key.set, sizeof(cards[i]->key.set), "s%u", (uint32_t)i);
-		cards[i]->key.version = (uint8_t)(i % 4);
 		cards[i]->key.collector_number = (uint16_t)i;
 	}
 
@@ -932,7 +931,7 @@ test_card_set()
 
 	/* Check non existing card */
 	{
-		sfc_card_key key = {"xxx", 0, 0};
+		sfc_card_key key = {"xxx", 0};
 		TEST_ASSERT(!sfc_card_set_has(card_set, &key));
 		TEST_ASSERT(sfc_card_set_get(card_set, &key) == NULL);
 	}

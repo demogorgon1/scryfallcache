@@ -100,8 +100,7 @@ typedef enum _sfc_card_string
 typedef struct _sfc_card_key
 {
 	char					set[SFC_MAX_SET];
-	uint16_t				collector_number;
-	uint8_t					version;
+	uint32_t				collector_number;
 } sfc_card_key;
 
 typedef struct _sfc_card_data

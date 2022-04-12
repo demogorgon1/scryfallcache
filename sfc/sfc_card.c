@@ -8,6 +8,7 @@
 #include <sfc/sfc_app.h>
 #include <sfc/sfc_card.h>
 
+#include "sfc_collector_number.h"
 #include "sfc_deserializer.h"
 #include "sfc_serializer.h"
 
@@ -464,37 +465,9 @@ sfc_card_parse_json(
 				char* value;
 				JSON_GET_STRING(value);
 
-				{
-					size_t len = strlen(value);
-					if (len > 0)
-					{
-						if (len > 3 &&
-							(uint8_t)value[len - 3] == 0xE2 &&
-							(uint8_t)value[len - 2] == 0x80 &&
-							(uint8_t)value[len - 1] == 0xA0)
-						{
-							/* Some card varirations have a little unicode cross at the end of
-							   their collector number.*/
-
-							/* FIXME: this isn't supported correctly... for now we'll just ignore it */
-
-							value[len - 3] = '\0';
-						}
-						else if (isalpha(value[len - 1]))
-						{
-							card->key.version = 1 + (uint8_t)(value[len - 1] - 'a');
-							value[len - 1] = '\0';
-						}
-					}
-				}
-
-				{
-					uint32_t temp = strtoul(value, NULL, 10);
-					if(temp > UINT16_MAX)
-						return SFC_RESULT_JSON_COLLECTOR_NUMBER_TOO_LARGE;
-						
-					card->key.collector_number = (uint16_t)temp;
-				}
+				sfc_result result = sfc_collector_number_from_string(value, &card->key.collector_number);
+				if(result != SFC_RESULT_OK)
+					return result;
 			}
 			else
 			{
@@ -537,9 +510,8 @@ sfc_card_serialize(
 	sfc_card_shrink_string_data(card);
 
 	/* Key */
-	SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, (uint32_t)card->key.collector_number);
+	SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, card->key.collector_number);
 	SFC_SERIALIZER_WRITE_STRING(serializer, card->key.set);
-	SFC_SERIALIZER_WRITE_UINT8(serializer, card->key.version);
 
 	/* Data */
 	SFC_SERIALIZER_WRITE_VAR_SIZE_UINT32(serializer, card->data.string_data_size);
@@ -580,17 +552,8 @@ sfc_card_deserialize(
 	struct _sfc_deserializer*	deserializer)
 {
 	/* Key */
-	{
-		uint32_t temp;
-		SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &temp);
-		if (temp > UINT16_MAX)
-			return SFC_RESULT_UINT16_TOO_BIG;
-
-		card->key.collector_number = (uint16_t)temp;
-	}
-
+	SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &card->key.collector_number);
 	SFC_DESERIALIZER_READ_STRING(deserializer, card->key.set, sizeof(card->key.set));
-	SFC_DESERIALIZER_READ_UINT8(deserializer, &card->key.version);
 
 	/* Data */
 	SFC_DESERIALIZER_READ_VAR_SIZE_UINT32(deserializer, &card->data.string_data_size);
@@ -645,9 +608,16 @@ void
 sfc_card_debug_print(
 	sfc_card*		card)
 {
-	printf("key.set: %s\n", card->key.set);
-	printf("key.collector_number: %u\n", card->key.collector_number);
-	printf("key.version: %u\n", card->key.version);
+	{
+		char temp[32];
+		sfc_result result = sfc_collector_number_to_string(card->key.collector_number, temp, sizeof(temp));
+
+		const char* p = "<invalid collector number>";
+		if (result == SFC_RESULT_OK)
+			p = temp;
+
+		printf("key: %s %s\n", card->key.set, p);
+	}
 	
 	printf("data.flags:");
 
@@ -695,7 +665,14 @@ void
 sfc_card_key_debug_print(
 	const sfc_card_key*	card_key)
 {
-	printf("%s %u (%u)\n", card_key->set, card_key->collector_number, card_key->version);
+	char temp[32];
+	sfc_result result = sfc_collector_number_to_string(card_key->collector_number, temp, sizeof(temp));
+	
+	const char* p = "<invalid collector number>";
+	if(result == SFC_RESULT_OK)
+		p = temp;
+
+	printf("%s %s\n", card_key->set, temp);
 }
 
 const char* 

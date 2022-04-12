@@ -11,6 +11,7 @@
 
 #include "sfc_card_map_uint32.h"
 #include "sfc_card_set.h"
+#include "sfc_collector_number.h"
 #include "sfc_leaky_bucket.h"
 #include "sfc_string_set.h"
 
@@ -89,27 +90,36 @@ sfc_query_update_init(
 			}
 			else
 			{
-				char version_tag = '\0';
+				char collector_number_string[16];
+				sfc_result result = sfc_collector_number_to_string(
+					query->u.card_key.collector_number, 
+					collector_number_string,
+					sizeof(collector_number_string));
 
-				if(query->u.card_key.version != 0)
-				{
-					version_tag = 'a' + query->u.card_key.version - 1;
-				}
-
-				int required = snprintf(query->http_get_url, sizeof(query->http_get_url), "https://api.scryfall.com/cards/%s/%u%c", 
-					query->u.card_key.set,
-					query->u.card_key.collector_number,
-					version_tag);
-				if (required > (int)sizeof(query->http_get_url))
+				if(result != SFC_RESULT_OK)
 				{
 					query->state = SFC_QUERY_STATE_COMPLETED;
-					query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+					query->result = result;
 				}
 				else
 				{
-					query->state = SFC_QUERY_STATE_HTTP_GET;
+					int required = snprintf(
+						query->http_get_url, 
+						sizeof(query->http_get_url), 
+						"https://api.scryfall.com/cards/%s/%s", 
+						query->u.card_key.set,
+						collector_number_string);
+			
+					if (required > (int)sizeof(query->http_get_url))
+					{
+						query->state = SFC_QUERY_STATE_COMPLETED;
+						query->result = SFC_RESULT_BUFFER_TOO_SMALL;
+					}
+					else
+					{
+						query->state = SFC_QUERY_STATE_HTTP_GET;
+					}
 				}
-
 				/*char temp[1024];
 				size_t offset = 0;
 
@@ -199,9 +209,11 @@ sfc_query_update_get_next_in_set(
 
 	for (sfc_card* card = query->cache->first_card; card != NULL; card = card->next)
 	{
+		uint32_t next_collector_number = 
+			SFC_COLLECTOR_NUMBER_MAKE(query->next_collector_number, query->next_collector_number_version);
+
 		if (strcmp(card->key.set, query->u.set) == 0 &&
-			card->key.version == query->next_collector_number_version &&
-			card->key.collector_number == query->next_collector_number)
+			card->key.collector_number == next_collector_number)
 		{
 			if (query->next_collector_number_version > 0)
 				query->next_collector_number_version++;
@@ -358,27 +370,43 @@ sfc_query_update_parse_result(
 				sfc_card_array_add(query->results, card);
 			}
 
-			if (query->type == SFC_QUERY_TYPE_CARD_KEY && query->u.card_key.version != card->key.version)
+			if (query->type == SFC_QUERY_TYPE_CARD_KEY && 
+				SFC_COLLECTOR_NUMBER_VERSION(query->u.card_key.collector_number) != SFC_COLLECTOR_NUMBER_VERSION(card->key.collector_number))
 			{
 				/* Oh no, we requested another version than we got. Since the scryfall API doesn't allow specifying what version you want
 					directly in the name search, we need to now get it with another request based on the collector's number. */
 
-				if (query->u.card_key.version == 0)
+				if (SFC_COLLECTOR_NUMBER_VERSION(query->u.card_key.collector_number) == 0)
 				{
 					query->result = SFC_RESULT_REQUEST_NEEDS_VERSION;
 					query->state = SFC_QUERY_STATE_COMPLETED;
 				}
 				else
 				{
-					snprintf(
-						query->http_get_url,
-						sizeof(query->http_get_url) - 1,
-						"https://api.scryfall.com/cards/%s/%u%c",
-						query->u.card_key.set,
-						card->key.collector_number,
-						'a' + query->u.card_key.version - 1);
+					uint32_t new_version = SFC_COLLECTOR_NUMBER_VERSION(query->u.card_key.collector_number);
 
-					query->state = SFC_QUERY_STATE_HTTP_GET;
+					char collector_number_string[16];
+					sfc_result collector_number_to_string_result = sfc_collector_number_to_string(
+						SFC_COLLECTOR_NUMBER_WITH_VERSION(card->key.collector_number, new_version),
+						collector_number_string,
+						sizeof(collector_number_string));
+
+					if(collector_number_to_string_result != SFC_RESULT_OK)
+					{
+						query->result = collector_number_to_string_result;
+						query->state = SFC_QUERY_STATE_COMPLETED;
+					}
+					else
+					{
+						snprintf(
+							query->http_get_url,
+							sizeof(query->http_get_url),
+							"https://api.scryfall.com/cards/%s/%s",
+							query->u.card_key.set,
+							collector_number_string);
+
+						query->state = SFC_QUERY_STATE_HTTP_GET;
+					}
 				}
 			}
 			else
