@@ -45,6 +45,7 @@ extern "C"
 #define SFC_RESULT_FILE_OPEN_ERROR					-32
 #define SFC_RESULT_OUT_OF_BOUNDS					-33
 #define SFC_RESULT_TIMED_OUT						-34
+#define SFC_RESULT_INVALID_COLLECTOR_NUMBER			-35
 
 typedef int sfc_result;
 

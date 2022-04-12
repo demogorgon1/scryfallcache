@@ -1,3 +1,5 @@
+/* This suite of tests cover far from everything, they just test the main functionality of the library */
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +10,7 @@
 #include "../sfc/sfc_buffer.h"
 #include "../sfc/sfc_card_map_uint32.h"
 #include "../sfc/sfc_card_set.h"
+#include "../sfc/sfc_collector_number.h"
 #include "../sfc/sfc_deserializer.h"
 #include "../sfc/sfc_leaky_bucket.h"
 #include "../sfc/sfc_serializer.h"
@@ -957,6 +960,107 @@ test_card_set()
 }
 
 void
+test_collector_number()
+{
+	test_user_data test_data;
+	sfc_app app;
+	test_init(&test_data, &app);
+
+	/* Plain vanilla collector number */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("1234", &c) == SFC_RESULT_OK);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER(c) == 1234);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(c) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_CROSS) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_SIDEBOARD) == 0);
+
+		char b[16];
+		TEST_ASSERT(sfc_collector_number_to_string(c, b, sizeof(b)) == SFC_RESULT_OK);
+		TEST_ASSERT(strcmp(b, "1234") == 0);
+	}
+
+	/* Plain vanilla collector number out of bounds */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("12345", &c) == SFC_RESULT_INVALID_COLLECTOR_NUMBER);
+	}
+
+	/* Number with invalid character */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("10!", &c) == SFC_RESULT_INVALID_COLLECTOR_NUMBER);
+	}
+
+	/* Number with version */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("123a", &c) == SFC_RESULT_OK);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER(c) == 123);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(c) == 1);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_CROSS) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_SIDEBOARD) == 0);
+
+		char b[16];
+		TEST_ASSERT(sfc_collector_number_to_string(c, b, sizeof(b)) == SFC_RESULT_OK);
+		TEST_ASSERT(strcmp(b, "123a") == 0);
+	}
+
+	/* World championship deck */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("xxx123", &c) == SFC_RESULT_OK);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER(c) == 123);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(c) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_CROSS) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_SIDEBOARD) == 0);
+
+		char b[16];
+		TEST_ASSERT(sfc_collector_number_to_string(c, b, sizeof(b)) == SFC_RESULT_OK);
+		TEST_ASSERT(strcmp(b, "xxx123") == 0);
+	}
+
+	/* World championship deck sideboard */
+	{
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string("xxx123sb", &c) == SFC_RESULT_OK);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER(c) == 123);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(c) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_CROSS) == 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_SIDEBOARD) != 0);
+
+		char b[16];
+		TEST_ASSERT(sfc_collector_number_to_string(c, b, sizeof(b)) == SFC_RESULT_OK);
+		TEST_ASSERT(strcmp(b, "xxx123sb") == 0);
+	}
+
+	/* Unicode cross suffix and version */
+	{
+		uint8_t number_with_unicode_cross_suffix[] =
+		{
+			(uint8_t)'1', (uint8_t)'2', (uint8_t)'3', (uint8_t)'d',
+			0xE2, 0x80, 0xA0,
+			'\0'
+		};
+
+		uint32_t c;
+		TEST_ASSERT(sfc_collector_number_from_string((const char*)number_with_unicode_cross_suffix, &c) == SFC_RESULT_OK);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER(c) == 123);
+		TEST_ASSERT(SFC_COLLECTOR_NUMBER_VERSION(c) == 4);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_CROSS) != 0);
+		TEST_ASSERT((c & SFC_COLLECTOR_NUMBER_SIDEBOARD) == 0);
+
+		char b[16];
+		TEST_ASSERT(sfc_collector_number_to_string(c, b, sizeof(b)) == SFC_RESULT_OK);
+		TEST_ASSERT(strcmp(b, (const char*)number_with_unicode_cross_suffix) == 0);
+	}
+
+	/* Make sure we didn't leak memory */
+	TEST_ASSERT(test_data.total_alloc_count == 0);
+	TEST_ASSERT(test_data.total_alloc_size == 0);
+}
+
+void
 test_leaky_bucket()
 {
 	test_user_data test_data;
@@ -1138,6 +1242,7 @@ main(
 	test_card_array();
 	test_card_map_uint32();
 	test_card_set();
+	test_collector_number();
 	test_leaky_bucket();
 	test_serializer();
 
